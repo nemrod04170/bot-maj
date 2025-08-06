@@ -1355,36 +1355,36 @@ class CryptoTradingBot:
             change_24h = signal_data.get('change_24h', 0)
             confidence = signal_data.get('confidence', 0.7)
             
-            # Configuration des offsets et prix (depuis config.txt)
-            maker_offset = self.config_manager.get('MAKER_OFFSET_PERCENT', 0.0001)
-            stop_loss_buy_multiplier = self.config_manager.get('STOP_LOSS_BUY_MULTIPLIER', 0.996)
-            stop_loss_sell_multiplier = self.config_manager.get('STOP_LOSS_SELL_MULTIPLIER', 1.004)
+            # Configuration des offsets et prix (depuis config.txt uniquement)
+            maker_offset = self.config_manager.get('MAKER_OFFSET_PERCENT')
+            stop_loss_buy_multiplier = self.config_manager.get('STOP_LOSS_BUY_MULTIPLIER')
+            stop_loss_sell_multiplier = self.config_manager.get('STOP_LOSS_SELL_MULTIPLIER')
             
             if use_maker_strategy:
                 # VIP élevé ou sans BNB : utiliser stratégie maker
                 if signal == 'BUY':
-                    entry_price = current_price * (1 - maker_offset)  # Sous le marché
-                    trading_fees = maker_fee
+                    entry_price = current_price * (1 - (maker_offset or 0.0001))  # Sous le marché
+                    trading_fees = maker_fee or 0.00075
                     order_type = "MAKER"
                 else:
-                    entry_price = current_price * (1 + maker_offset)  # Sur le marché
-                    trading_fees = maker_fee
+                    entry_price = current_price * (1 + (maker_offset or 0.0001))  # Sur le marché
+                    trading_fees = maker_fee or 0.00075
                     order_type = "MAKER"
             else:
                 # VIP 0 + BNB : frais identiques, utiliser prix marché (taker)
                 entry_price = current_price  # Prix de marché directement
-                trading_fees = taker_fee  # 0.075% (= maker_fee)
+                trading_fees = taker_fee or 0.00075  # 0.075% (= maker_fee)
                 order_type = "TAKER"
             
             # Calculs stop loss seulement (take profit supprimé - système 3 couches utilisé)
             if signal == 'BUY':
                 operation = 'ACHAT'
                 direction = 'LONG'
-                stop_loss = entry_price * stop_loss_buy_multiplier
+                stop_loss = entry_price * (stop_loss_buy_multiplier or 0.996)
             else:
                 operation = 'VENTE'
                 direction = 'SHORT'
-                stop_loss = entry_price * stop_loss_sell_multiplier
+                stop_loss = entry_price * (stop_loss_sell_multiplier or 1.004)
             
             # Calculer la taille de position selon la stratégie OPTIMISÉE (depuis config.txt)
             max_position_per_crypto = self.config_manager.get('order_size') or self.config_manager.get('POSITION_SIZE_USDT')
