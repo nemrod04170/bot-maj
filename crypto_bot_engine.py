@@ -1301,8 +1301,22 @@ class CryptoTradingBot:
                             self._close_position_with_reason(position, current_price, "MOMENTUM_DECLINE")
                             return
                     
-                    # RÈGLE 5: TIMEOUT INTELLIGENT basé sur le mouvement du prix
+                    # RÈGLE 4.5: VENTE RAPIDE sur chute modérée mais RAPIDE (dans les premières minutes)
                     time_elapsed = (datetime.now() - position['entry_time']).total_seconds()
+                    rapid_exit_threshold = self.config_manager.get('RAPID_EXIT_THRESHOLD', -0.5)  # -0.5% 
+                    rapid_exit_time_limit = self.config_manager.get('RAPID_EXIT_TIME_LIMIT', 120)  # 2 minutes
+                    
+                    if isinstance(rapid_exit_threshold, str):
+                        rapid_exit_threshold = float(rapid_exit_threshold)
+                    if isinstance(rapid_exit_time_limit, str):
+                        rapid_exit_time_limit = float(rapid_exit_time_limit)
+                    
+                    if time_elapsed <= rapid_exit_time_limit and price_change_percent <= rapid_exit_threshold:
+                        self.log(f"⚡ {symbol}: VENTE RAPIDE - Chute de {price_change_percent:+.2f}% en {time_elapsed:.0f}s !")
+                        self._close_position_with_reason(position, current_price, "RAPID_EXIT")
+                        return
+                    
+                    # RÈGLE 5: TIMEOUT INTELLIGENT basé sur le mouvement du prix
                     
                     # Critères intelligents au lieu d'un timeout fixe
                     price_change_abs = abs(price_change_percent)
