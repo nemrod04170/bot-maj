@@ -18,6 +18,8 @@ timeout_seconds = 180          # Durée max d'un trade (secondes)
 take_profit_percent = 0.8      # Objectif de profit rapide (%)
 TRAILING_STOP_ENABLED = True   # Activer le trailing stop
 TIMEOUT_EXIT_SECONDS = 180     # Timeout pour sortie automatique
+STOP_LOSS_BUY_MULTIPLIER = 0.996   # Multiplicateur stop loss achat
+STOP_LOSS_SELL_MULTIPLIER = 1.004  # Multiplicateur stop loss vente
 
 # INDICATEURS TECHNIQUES
 # ======================
@@ -95,10 +97,17 @@ MIN_SUCCESS_RATE = 60         # Taux de succès minimum (%)
 ENABLE_SLIPPAGE_TRACKING = True  # Activer le suivi du slippage
 MAX_ACCEPTABLE_SLIPPAGE = 0.1    # Slippage maximum acceptable (%)
 
-# FRAIS BINANCE
-# =============
+# FRAIS BINANCE ET TRADING
+# ========================
 USE_BNB_DISCOUNT = True       # Utiliser le discount BNB
 BINANCE_VIP_LEVEL = 0         # Niveau VIP Binance
+VIP_4_MAKER_FEE = 0.0002      # Frais maker VIP 4+ (0.02%)
+VIP_4_TAKER_FEE = 0.0004      # Frais taker VIP 4+ (0.04%)
+BASE_MAKER_FEE = 0.001        # Frais maker de base (0.10%)
+BASE_TAKER_FEE = 0.001        # Frais taker de base (0.10%)
+BNB_DISCOUNT_RATE = 0.75      # Taux de discount BNB (25% off)
+DEFAULT_TRADING_FEES = 0.001  # Frais de trading par défaut (0.10%)
+MAKER_OFFSET_PERCENT = 0.0001 # Décalage maker (0.01%)
 
 # CONFIGURATION INTERFACE GRAPHIQUE
 # =================================
