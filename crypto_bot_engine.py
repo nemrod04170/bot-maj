@@ -1433,9 +1433,10 @@ class CryptoTradingBot:
             signal = 'HOLD'
             
             # Critères simples pour générer des trades - LOGIQUE SCALPING CORRIGÉE
-            if change_24h < -1.0:  # -1% = signal d'achat (acheter bas)
+            # CORRIGÉ: Acheter quand ça MONTE, pas quand ça descend !
+            if change_24h > 1.0:  # +1% = signal d'achat (acheter la momentum ascendante)
                 signal = 'BUY'
-            elif change_24h > 1.0:  # +1% = signal de vente (vendre haut)
+            elif change_24h < -1.0:  # -1% = signal de vente (éviter la chute)  
                 signal = 'SELL'
             
             # NOUVELLE LOGIQUE : ENTRER UNIQUEMENT SUR SIGNAL BUY
