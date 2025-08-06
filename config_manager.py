@@ -58,6 +58,10 @@ class ConfigManager:
                     key = key.strip()
                     value = value.strip()
                     
+                    # Supprimer les commentaires inline (après #)
+                    if '#' in value:
+                        value = value.split('#')[0].strip()
+                    
                     # Conversion automatique des types
                     self.config[key] = self._convert_value(value)
             
