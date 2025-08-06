@@ -988,12 +988,31 @@ class ScalpingBotGUI:
                 # 3. VALEUR TOTALE = Balance disponible + Positions ouvertes
                 total_portfolio_value = available_balance + positions_value
                 
-                # 4. P&L TOTAL = Valeur totale actuelle - Balance initiale
+                # 4. P&L TOTAL = Somme des P&L réalisés + P&L des positions ouvertes
+                
+                # P&L réalisé des trades fermés
+                realized_pnl = 0.0
+                if hasattr(self.bot, 'closed_trades') and self.bot.closed_trades:
+                    for trade in self.bot.closed_trades:
+                        realized_pnl += trade.get('net_pnl', 0.0)
+                
+                # P&L non-réalisé des positions ouvertes
+                unrealized_pnl = 0.0
+                if hasattr(self.bot, 'open_positions') and self.bot.open_positions:
+                    for position in self.bot.open_positions:
+                        if position['status'] == 'open':
+                            entry_price = position['price']
+                            current_price = position.get('current_price', entry_price)
+                            quantity = position['quantity']
+                            unrealized_pnl += (current_price - entry_price) * quantity
+                
+                total_pnl = realized_pnl + unrealized_pnl
+                
+                # Calcul du pourcentage basé sur la balance initiale
                 initial_balance = self.bot.config_manager.get('INITIAL_BALANCE', 1000.0)
                 if isinstance(initial_balance, str):
                     initial_balance = float(initial_balance)
                 
-                total_pnl = total_portfolio_value - initial_balance
                 pnl_percent = (total_pnl / initial_balance) * 100 if initial_balance > 0 else 0
                 
                 # Mettre à jour les labels
