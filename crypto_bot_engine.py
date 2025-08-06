@@ -1182,7 +1182,7 @@ class CryptoTradingBot:
             self.log(f"❌ Erreur système surveillance {symbol}: {e}")
     
     def _monitor_position_simple(self, position: Dict):
-        """Surveillance INTELLIGENTE avec tracking momentum - Ne vend QUE quand nécessaire"""
+        """Surveillance INTELLIGENTE avec tracking momentum - Logique réorganisée et complète"""
         try:
             symbol = position['symbol']
             entry_price = position['entry_price']
@@ -1204,9 +1204,7 @@ class CryptoTradingBot:
             price_history = []
             tp_reached_time = None
             extended_tp = take_profit  # TP peut être étendu si momentum fort
-            
-            # Variables pour trailing stop intelligent
-            highest_profit = 0.0  # Plus haut profit atteint
+            highest_profit = 0.0  # Pour trailing stop
             trailing_activated = False
             
             self.log(f"🧠 SURVEILLANCE INTELLIGENTE: {symbol}")
@@ -1230,9 +1228,12 @@ class CryptoTradingBot:
                         price_history = price_history[-min_samples * 2:]
                     
                     price_change_percent = ((current_price - entry_price) / entry_price) * 100
+                    time_elapsed = (datetime.now() - position['entry_time']).total_seconds()
                     
-                    # RÈGLE 1: VENTE IMMÉDIATE sur CHUTE SIGNIFICATIVE (nouvelle règle prioritaire)
-                    immediate_exit_threshold = self.config_manager.get('IMMEDIATE_EXIT_THRESHOLD', -0.8)  # -0.8% par défaut
+                    # === RÈGLES DE VENTE PAR ORDRE DE PRIORITÉ ===
+                    
+                    # PRIORITÉ 1: VENTE IMMÉDIATE sur chute significative
+                    immediate_exit_threshold = self.config_manager.get('IMMEDIATE_EXIT_THRESHOLD', -0.8)
                     if isinstance(immediate_exit_threshold, str):
                         immediate_exit_threshold = float(immediate_exit_threshold)
                     
@@ -1241,13 +1242,27 @@ class CryptoTradingBot:
                         self._close_position_with_reason(position, current_price, "IMMEDIATE_EXIT")
                         return
                     
-                    # RÈGLE 2: STOP LOSS traditionnel (si pas encore vendu)
+                    # PRIORITÉ 2: VENTE RAPIDE sur chute modérée dans les premières minutes
+                    rapid_exit_threshold = self.config_manager.get('RAPID_EXIT_THRESHOLD', -0.5)
+                    rapid_exit_time_limit = self.config_manager.get('RAPID_EXIT_TIME_LIMIT', 120)
+                    
+                    if isinstance(rapid_exit_threshold, str):
+                        rapid_exit_threshold = float(rapid_exit_threshold)
+                    if isinstance(rapid_exit_time_limit, str):
+                        rapid_exit_time_limit = float(rapid_exit_time_limit)
+                    
+                    if time_elapsed <= rapid_exit_time_limit and price_change_percent <= rapid_exit_threshold:
+                        self.log(f"⚡ {symbol}: VENTE RAPIDE - Chute de {price_change_percent:+.2f}% en {time_elapsed:.0f}s !")
+                        self._close_position_with_reason(position, current_price, "RAPID_EXIT")
+                        return
+                    
+                    # PRIORITÉ 3: STOP LOSS traditionnel
                     if current_price <= stop_loss:
                         self.log(f"🛑 {symbol}: STOP LOSS déclenché à {current_price:.6f} (-{abs(price_change_percent):.2f}%)")
                         self._close_position_with_reason(position, current_price, "STOP_LOSS")
                         return
                     
-                    # RÈGLE 2: CALCUL MOMENTUM (si assez d'échantillons)
+                    # CALCUL MOMENTUM (si assez d'échantillons)
                     momentum_percent = 0
                     momentum_trend = "NEUTRE"
                     
@@ -1267,68 +1282,68 @@ class CryptoTradingBot:
                         else:
                             momentum_trend = "BAISSE 📉"
                     
-                    # RÈGLE 3: VENTE PROACTIVE quand ça MONTE (avant même d'atteindre le TP)
+                    # === RÈGLES POUR LES POSITIONS EN PROFIT ===
                     
-                    # VENTE ANTICIPÉE : Si bon profit ET momentum faiblit
-                    early_profit_threshold = self.config_manager.get('EARLY_PROFIT_THRESHOLD', 0.8)  # 0.8% de profit
-                    if isinstance(early_profit_threshold, str):
-                        early_profit_threshold = float(early_profit_threshold)
-                    
-                    if price_change_percent >= early_profit_threshold:
-                        # On est en profit, surveiller le momentum pour vente anticipée
-                        if intelligent_tracking and len(price_history) >= min_samples:
-                            if momentum_percent < stagnation_threshold:
-                                self.log(f"💰 {symbol}: VENTE ANTICIPÉE - Profit {price_change_percent:+.2f}% + momentum faiblit")
-                                self._close_position_with_reason(position, current_price, "EARLY_PROFIT_EXIT")
-                                return
-                    
-                    # VENTE SUR PROFIT IMPORTANT : Si profit excellent, vendre immédiatement
-                    strong_profit_threshold = self.config_manager.get('STRONG_PROFIT_THRESHOLD', 1.8)  # 1.8% de profit
-                    if isinstance(strong_profit_threshold, str):
-                        strong_profit_threshold = float(strong_profit_threshold)
-                    
-                    if price_change_percent >= strong_profit_threshold:
-                        self.log(f"🎉 {symbol}: VENTE PROFIT EXCELLENT - {price_change_percent:+.2f}% de gains !")
-                        self._close_position_with_reason(position, current_price, "STRONG_PROFIT_EXIT")
-                        return
-                    
-                    # TRAILING STOP : Suivre les profits et vendre si ça redescend
-                    trailing_activation_threshold = self.config_manager.get('TRAILING_ACTIVATION_THRESHOLD', 1.0)  # 1%
-                    trailing_stop_distance = self.config_manager.get('TRAILING_STOP_DISTANCE', 0.3)  # 0.3%
-                    
-                    if isinstance(trailing_activation_threshold, str):
-                        trailing_activation_threshold = float(trailing_activation_threshold)
-                    if isinstance(trailing_stop_distance, str):
-                        trailing_stop_distance = float(trailing_stop_distance)
-                    
-                    # Activer le trailing stop si on atteint un profit suffisant
-                    if price_change_percent >= trailing_activation_threshold:
-                        if not trailing_activated:
-                            trailing_activated = True
-                            highest_profit = price_change_percent
-                            self.log(f"📈 {symbol}: TRAILING STOP activé - Profit: {highest_profit:+.2f}%")
-                        else:
-                            # Mettre à jour le plus haut profit
-                            if price_change_percent > highest_profit:
+                    if price_change_percent > 0:  # Seulement si en profit
+                        
+                        # VENTE SUR PROFIT EXCELLENT (immédiate)
+                        strong_profit_threshold = self.config_manager.get('STRONG_PROFIT_THRESHOLD', 2.5)
+                        if isinstance(strong_profit_threshold, str):
+                            strong_profit_threshold = float(strong_profit_threshold)
+                        
+                        if price_change_percent >= strong_profit_threshold:
+                            self.log(f"🎉 {symbol}: VENTE PROFIT EXCELLENT - {price_change_percent:+.2f}% de gains !")
+                            self._close_position_with_reason(position, current_price, "STRONG_PROFIT_EXIT")
+                            return
+                        
+                        # TRAILING STOP pour les profits significatifs
+                        trailing_activation_threshold = self.config_manager.get('TRAILING_ACTIVATION_THRESHOLD', 1.2)
+                        trailing_stop_distance = self.config_manager.get('TRAILING_STOP_DISTANCE', 0.4)
+                        
+                        if isinstance(trailing_activation_threshold, str):
+                            trailing_activation_threshold = float(trailing_activation_threshold)
+                        if isinstance(trailing_stop_distance, str):
+                            trailing_stop_distance = float(trailing_stop_distance)
+                        
+                        # Activer trailing stop
+                        if price_change_percent >= trailing_activation_threshold:
+                            if not trailing_activated:
+                                trailing_activated = True
                                 highest_profit = price_change_percent
-                                self.log(f"🚀 {symbol}: Nouveau plus haut - Profit: {highest_profit:+.2f}%")
+                                self.log(f"📈 {symbol}: TRAILING STOP activé - Profit: {highest_profit:+.2f}%")
+                            else:
+                                # Mettre à jour le plus haut
+                                if price_change_percent > highest_profit:
+                                    highest_profit = price_change_percent
+                        
+                        # Déclencher trailing stop
+                        if trailing_activated and price_change_percent < (highest_profit - trailing_stop_distance):
+                            self.log(f"📉 {symbol}: TRAILING STOP ! Max: {highest_profit:+.2f}% → Actuel: {price_change_percent:+.2f}%")
+                            self._close_position_with_reason(position, current_price, "TRAILING_STOP_PROFIT")
+                            return
+                        
+                        # VENTE ANTICIPÉE sur profit modéré + momentum faible
+                        early_profit_threshold = self.config_manager.get('EARLY_PROFIT_THRESHOLD', 0.8)
+                        if isinstance(early_profit_threshold, str):
+                            early_profit_threshold = float(early_profit_threshold)
+                        
+                        if (price_change_percent >= early_profit_threshold and 
+                            intelligent_tracking and len(price_history) >= min_samples and 
+                            momentum_percent < stagnation_threshold):
+                            self.log(f"💰 {symbol}: VENTE ANTICIPÉE - Profit {price_change_percent:+.2f}% + momentum faible")
+                            self._close_position_with_reason(position, current_price, "EARLY_PROFIT_EXIT")
+                            return
                     
-                    # Vente trailing stop si le profit redescend trop
-                    if trailing_activated and price_change_percent < (highest_profit - trailing_stop_distance):
-                        self.log(f"📉 {symbol}: TRAILING STOP déclenché ! Max: {highest_profit:+.2f}% → Actuel: {price_change_percent:+.2f}%")
-                        self._close_position_with_reason(position, current_price, "TRAILING_STOP_PROFIT")
-                        return
+                    # === GESTION TAKE PROFIT TRADITIONNEL + EXTENSION ===
                     
-                    # RÈGLE 4: GESTION TAKE PROFIT TRADITIONNEL (si pas encore vendu)
                     if current_price >= take_profit:
                         if tp_reached_time is None:
                             tp_reached_time = datetime.now()
                             self.log(f"🎯 {symbol}: Take Profit initial atteint ! Surveillance momentum activée")
                         
                         if intelligent_tracking and len(price_history) >= min_samples:
-                            # Si momentum encore très positif, étendre le TP
+                            # Extension du TP si momentum très fort
                             if momentum_percent > strong_momentum and momentum_trend == "FORTE HAUSSE 🚀":
-                                # Calculer nouveau TP étendu
                                 extension_factor = min(1 + (max_tp_extension / 100), 1.05)  # Max +5%
                                 new_extended_tp = entry_price * (1 + (((take_profit / entry_price) - 1) * extension_factor))
                                 
@@ -1336,77 +1351,62 @@ class CryptoTradingBot:
                                     extended_tp = new_extended_tp
                                     self.log(f"🚀 {symbol}: TP ÉTENDU à {extended_tp:.6f} (momentum: +{momentum_percent:.2f}%)")
                             
-                            # Vendre si momentum faiblit ou devient négatif
+                            # Vendre si momentum faiblit
                             elif momentum_percent < stagnation_threshold:
-                                self.log(f"💰 {symbol}: VENTE - TP atteint + momentum faible ({momentum_trend})")
-                                self.log(f"   Prix: {current_price:.6f} | Momentum: {momentum_percent:+.2f}%")
+                                self.log(f"💰 {symbol}: VENTE TP + momentum faible ({momentum_trend})")
                                 self._close_position_with_reason(position, current_price, "TAKE_PROFIT_INTELLIGENT")
                                 return
                         else:
-                            # Mode classique si pas assez d'échantillons
-                            self.log(f"🎉 {symbol}: TAKE PROFIT classique atteint à {current_price:.6f}")
+                            # TP classique si pas assez d'échantillons
+                            self.log(f"🎉 {symbol}: TAKE PROFIT classique à {current_price:.6f}")
                             self._close_position_with_reason(position, current_price, "TAKE_PROFIT")
                             return
                     
-                    # RÈGLE 4: VENTE SI MOMENTUM DEVIENT NÉGATIF (même sans atteindre TP)
-                    if intelligent_tracking and len(price_history) >= min_samples:
-                        if momentum_percent < decline_threshold and price_change_percent > 0.2:
-                            # On était en profit mais momentum devient négatif
-                            self.log(f"⚠️ {symbol}: VENTE préventive - Momentum négatif détecté")
-                            self.log(f"   Prix: {current_price:.6f} | Momentum: {momentum_percent:+.2f}% | Profit: {price_change_percent:+.2f}%")
-                            self._close_position_with_reason(position, current_price, "MOMENTUM_DECLINE")
-                            return
+                    # === VENTE PRÉVENTIVE SUR MOMENTUM NÉGATIF ===
                     
-                    # RÈGLE 4.5: VENTE RAPIDE sur chute modérée mais RAPIDE (dans les premières minutes)
-                    time_elapsed = (datetime.now() - position['entry_time']).total_seconds()
-                    rapid_exit_threshold = self.config_manager.get('RAPID_EXIT_THRESHOLD', -0.5)  # -0.5% 
-                    rapid_exit_time_limit = self.config_manager.get('RAPID_EXIT_TIME_LIMIT', 120)  # 2 minutes
-                    
-                    if isinstance(rapid_exit_threshold, str):
-                        rapid_exit_threshold = float(rapid_exit_threshold)
-                    if isinstance(rapid_exit_time_limit, str):
-                        rapid_exit_time_limit = float(rapid_exit_time_limit)
-                    
-                    if time_elapsed <= rapid_exit_time_limit and price_change_percent <= rapid_exit_threshold:
-                        self.log(f"⚡ {symbol}: VENTE RAPIDE - Chute de {price_change_percent:+.2f}% en {time_elapsed:.0f}s !")
-                        self._close_position_with_reason(position, current_price, "RAPID_EXIT")
+                    if (intelligent_tracking and len(price_history) >= min_samples and 
+                        momentum_percent < decline_threshold and price_change_percent > 0.2):
+                        self.log(f"⚠️ {symbol}: VENTE préventive - Momentum négatif en profit")
+                        self._close_position_with_reason(position, current_price, "MOMENTUM_DECLINE")
                         return
                     
-                    # RÈGLE 5: TIMEOUT INTELLIGENT basé sur le mouvement du prix
+                    # === TIMEOUTS INTELLIGENTS ===
                     
-                    # Critères intelligents au lieu d'un timeout fixe
                     price_change_abs = abs(price_change_percent)
                     
-                    # CRITÈRE 1: Si ça bouge peu ET c'est long → Fermer (position stagnante)
-                    stagnation_timeout = self.config_manager.get('STAGNATION_TIMEOUT_SECONDS', 600)  # 10 min
-                    stagnation_threshold = self.config_manager.get('STAGNATION_PRICE_THRESHOLD', 0.1)  # 0.1%
+                    # Position stagnante
+                    stagnation_timeout = self.config_manager.get('STAGNATION_TIMEOUT_SECONDS', 600)
+                    stagnation_price_threshold = self.config_manager.get('STAGNATION_PRICE_THRESHOLD', 0.1)
                     
-                    if time_elapsed > stagnation_timeout and price_change_abs < stagnation_threshold:
-                        self.log(f"⏰ {symbol}: Position STAGNANTE ({price_change_abs:.2f}% en {time_elapsed:.0f}s) - Fermeture")
+                    if time_elapsed > stagnation_timeout and price_change_abs < stagnation_price_threshold:
+                        self.log(f"⏰ {symbol}: Position STAGNANTE ({price_change_abs:.2f}% en {time_elapsed:.0f}s)")
                         self._close_position_with_reason(position, current_price, "STAGNATION_TIMEOUT")
                         return
                     
-                    # CRITÈRE 2: Si ça bouge dans le mauvais sens ET c'est long → Fermer plus vite
-                    negative_timeout = self.config_manager.get('NEGATIVE_TIMEOUT_SECONDS', 300)  # 5 min
+                    # Position négative trop longtemps
+                    negative_timeout = self.config_manager.get('NEGATIVE_TIMEOUT_SECONDS', 300)
                     if time_elapsed > negative_timeout and price_change_percent < -0.2:
-                        self.log(f"⏰ {symbol}: Position NÉGATIVE ({price_change_percent:+.2f}% en {time_elapsed:.0f}s) - Fermeture")
+                        self.log(f"⏰ {symbol}: Position NÉGATIVE trop longtemps ({price_change_percent:+.2f}%)")
                         self._close_position_with_reason(position, current_price, "NEGATIVE_TIMEOUT")
                         return
                     
-                    # CRITÈRE 3: Timeout de sécurité absolue (très long si ça bouge bien)
-                    max_absolute_timeout = self.config_manager.get('MAX_ABSOLUTE_TIMEOUT_SECONDS', 1800)  # 30 min max
+                    # Timeout de sécurité absolue
+                    max_absolute_timeout = self.config_manager.get('MAX_ABSOLUTE_TIMEOUT_SECONDS', 1800)
                     if time_elapsed > max_absolute_timeout:
-                        self.log(f"⏰ {symbol}: TIMEOUT ABSOLU ({time_elapsed:.0f}s) - Fermeture forcée")
+                        self.log(f"⏰ {symbol}: TIMEOUT ABSOLU ({time_elapsed:.0f}s)")
                         self._close_position_with_reason(position, current_price, "ABSOLUTE_TIMEOUT")
                         return
                     
-                    # Log périodique avec momentum
+                    # Log périodique
                     if int(time_elapsed) % 15 == 0:  # Toutes les 15s
-                        self.log(f"🧠 {symbol}: {price_change_percent:+.2f}% | Momentum: {momentum_trend} ({momentum_percent:+.2f}%)")
+                        status = f"Profit: {price_change_percent:+.2f}%" if price_change_percent > 0 else f"Perte: {price_change_percent:+.2f}%"
+                        self.log(f"🧠 {symbol}: {status} | {momentum_trend} ({momentum_percent:+.2f}%)")
+                        if trailing_activated:
+                            self.log(f"   📈 Trailing: Max {highest_profit:+.2f}% | Stop à {highest_profit-trailing_stop_distance:+.2f}%")
                         if extended_tp > take_profit:
                             self.log(f"   🎯 TP étendu: {extended_tp:.6f} (original: {take_profit:.6f})")
                     
-                    time.sleep(momentum_check_interval)  # Check toutes les 3 secondes
+                    time.sleep(momentum_check_interval)
                     
                 except Exception as e:
                     self.log(f"❌ Erreur surveillance {symbol}: {e}")
