@@ -1499,6 +1499,10 @@ class ScalpingBotGUI:
             reason_icons = {
                 'TAKE_PROFIT': '🎯',
                 'TAKE_PROFIT_INTELLIGENT': '🎯',
+                'TP_MOMENTUM_DECLINE': '📉',      # TP dépassé + momentum devient négatif
+                'TP_PRICE_DECLINE': '⚠️',        # Prix redescend sous TP original
+                'TP_TIME_LIMIT': '⏰',           # Trop longtemps au TP sans momentum
+                'TP_REVERSION': '📉',            # Prix redescend sous TP après l'avoir dépassé
                 'STOP_LOSS': '🛑',
                 'MOMENTUM_DECLINE': '📊',
                 'TIMEOUT': '⏱️',
