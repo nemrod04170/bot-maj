@@ -301,7 +301,8 @@ class TestCryptoTradingBot(unittest.TestCase):
         except Exception as e:
             print(f"❌ Portfolio State Closed Trades Structure: FAILED - {str(e)}")
             return False
-        """Test 1: Configuration Management - Verify config.txt and config_manager.py work correctly"""
+    def test_config_manager_functionality(self):
+        """Test 8: Configuration Management - Verify config.txt and config_manager.py work correctly"""
         try:
             # Change to app directory to access config_manager
             os.chdir('/app')
