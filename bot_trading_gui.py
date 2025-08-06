@@ -1502,7 +1502,12 @@ class ScalpingBotGUI:
                 'MOMENTUM': '📊',
                 'TIMEOUT': '⏱️',
                 'MANUAL': '👤',
-                'TRAILING_STOP': '📈'
+                'TRAILING_STOP': '📈',
+                'IMMEDIATE_EXIT': '🚨',     # Chute significative
+                'RAPID_EXIT': '⚡',         # Chute rapide
+                'STAGNATION_TIMEOUT': '💤', # Position stagnante
+                'NEGATIVE_TIMEOUT': '⬇️',   # Position négative trop longtemps
+                'ABSOLUTE_TIMEOUT': '⏰'    # Timeout absolu
             }
             reason_icon = reason_icons.get(exit_reason, '❓')
             
