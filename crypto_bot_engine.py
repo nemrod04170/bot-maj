@@ -1387,7 +1387,7 @@ class CryptoTradingBot:
                 stop_loss = entry_price * stop_loss_sell_multiplier
             
             # Calculer la taille de position selon la stratégie OPTIMISÉE (depuis config.txt)
-            max_position_per_crypto = self.config_manager.get('order_size', self.config_manager.get('POSITION_SIZE_USDT', 100.0))
+            max_position_per_crypto = self.config_manager.get('order_size') or self.config_manager.get('POSITION_SIZE_USDT')
             
             # Vérifier qu'on a assez de capital
             if self.simulation_mode:
