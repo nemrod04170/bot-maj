@@ -1509,7 +1509,7 @@ class CryptoTradingBot:
             entry_price = position['price']
             quantity = position['quantity']
             position_value = position['value_usdt']  # 200€ initial
-            # Calculer frais d'entrée avec taux depuis config.txt uniquement
+            # Calculer frais d'entrée avec taux depuis config.txt UNIQUEMENT
             default_trading_fees = self.config_manager.get('DEFAULT_TRADING_FEES')
             entry_fees = position.get('entry_fees', position_value * (default_trading_fees or 0.001))
             trading_fees = position.get('trading_fees', default_trading_fees or 0.001)
