@@ -1573,9 +1573,12 @@ class CryptoTradingBot:
             direction = 'LONG' 
             signal_display = 'BUY'  # Toujours BUY maintenant
             
+            # === CALCUL TAKE PROFIT DYNAMIQUE ===
+            dynamic_tp_percent = self._calculate_dynamic_take_profit(symbol, signal_data)
+            
             # STOP LOSS et TAKE PROFIT pour LONG uniquement
             stop_loss = entry_price * (stop_loss_buy_multiplier or 0.995)    # -0.5% (plus bas)
-            take_profit = entry_price * (take_profit_buy_multiplier or 1.015) # +1.5% (plus haut)
+            take_profit = entry_price * (1 + (dynamic_tp_percent / 100))     # TP dynamique (plus haut)
             
             # Calculer la taille de position selon la stratégie OPTIMISÉE (depuis config.txt UNIQUEMENT)
             max_position_per_crypto = self.config_manager.get('order_size') or self.config_manager.get('POSITION_SIZE_USDT')
