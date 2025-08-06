@@ -1355,9 +1355,13 @@ class CryptoTradingBot:
             change_24h = signal_data.get('change_24h', 0)
             confidence = signal_data.get('confidence', 0.7)
             
+            # Configuration des offsets et prix (depuis config.txt)
+            maker_offset = self.config_manager.get('MAKER_OFFSET_PERCENT', 0.0001)
+            stop_loss_buy_multiplier = self.config_manager.get('STOP_LOSS_BUY_MULTIPLIER', 0.996)
+            stop_loss_sell_multiplier = self.config_manager.get('STOP_LOSS_SELL_MULTIPLIER', 1.004)
+            
             if use_maker_strategy:
                 # VIP élevé ou sans BNB : utiliser stratégie maker
-                maker_offset = 0.0001  # 0.01% de décalage
                 if signal == 'BUY':
                     entry_price = current_price * (1 - maker_offset)  # Sous le marché
                     trading_fees = maker_fee
@@ -1376,11 +1380,11 @@ class CryptoTradingBot:
             if signal == 'BUY':
                 operation = 'ACHAT'
                 direction = 'LONG'
-                stop_loss = entry_price * 0.996   # -0.4%
+                stop_loss = entry_price * stop_loss_buy_multiplier
             else:
                 operation = 'VENTE'
                 direction = 'SHORT'
-                stop_loss = entry_price * 1.004   # +0.4%
+                stop_loss = entry_price * stop_loss_sell_multiplier
             
             # Calculer la taille de position selon la stratégie OPTIMISÉE
             # Nouvelle stratégie: 2000€ ÷ 20 cryptos = 100€ par crypto maximum
