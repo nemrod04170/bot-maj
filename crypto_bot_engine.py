@@ -1009,13 +1009,16 @@ class CryptoTradingBot:
                 
                 # Redémarrer la surveillance des positions ouvertes
                 for position in self.open_positions:
-                    if position.get('status') == 'open' and self.trailing_stop_enabled:
-                        # NOUVEAU: Surveillance simplifiée Stop Loss + Take Profit
-                        if position.get('system_type') == 'SIMPLE_STOP_TAKE_PROFIT':
+                    if position.get('status') == 'open':
+                        # NOUVEAU SYSTÈME : Vérifier le type de surveillance à utiliser
+                        system_type = position.get('system_type', 'LEGACY')
+                        if system_type == 'SIMPLE_STOP_TAKE_PROFIT':
+                            # Nouveau système simplifié
                             threading.Thread(target=self._monitor_position_simple, args=[position], daemon=True).start()
-                        else:
+                        elif self.config_manager.get('TRAILING_STOP_ENABLED', False):
                             # Ancienne surveillance 3 couches (compatibilité)
                             threading.Thread(target=self._monitor_position_3_layers, args=[position], daemon=True).start()
+                        # Sinon, pas de surveillance automatique (positions héritées)
                         
             else:
                 self.log(f"📂 Nouveau portefeuille créé - Balance initiale: {self.balance:.2f}€")
