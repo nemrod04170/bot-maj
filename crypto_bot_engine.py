@@ -984,6 +984,7 @@ class CryptoTradingBot:
                 self.total_pnl = data.get('total_pnl', 0.0)
                 self.total_trades = data.get('total_trades', 0)
                 self.winning_trades = data.get('winning_trades', 0)
+                self.total_fees = data.get('total_fees', 0.0)  # NOUVEAU: Restaurer frais totaux
                 self.closed_trades = data.get('closed_trades', [])
                 
                 # Restaurer les positions ouvertes
