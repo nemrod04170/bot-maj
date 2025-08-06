@@ -1942,7 +1942,7 @@ class CryptoTradingBot:
                 current_price = position['price'] * (1 + variation)
                 print(f"⚠️ Utilisation prix aléatoire pour {symbol}: {variation*100:+.2f}%")
             
-            self._close_position_scalping(position, current_price)
+            self._close_position_with_reason(position, current_price, "AUTO_CLOSE_RANDOM_PRICE")
     def _process_trading_signal(self, symbol: str, signal_data: Dict):
         """Traite un signal de trading avec affichage détaillé"""
         try:
