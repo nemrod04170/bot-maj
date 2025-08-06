@@ -958,30 +958,48 @@ class ScalpingBotGUI:
         """Callback pour mettre à jour la balance et stats - Thread-safe"""
         def update_gui():
             try:
-                # Calculer la valeur totale du portefeuille
-                total_portfolio_value = balance
+                # CORRECTION: Logique simplifiée et correcte
                 
+                # 1. BALANCE DISPONIBLE = Cash libre pour trading
+                available_balance = balance
+                
+                # 2. VALEUR DES POSITIONS OUVERTES (prix d'achat, pas prix actuel)
+                positions_value = 0
                 if hasattr(self.bot, 'open_positions') and self.bot.open_positions:
                     for position in self.bot.open_positions:
                         if position.get('status') == 'open':
-                            # Pour l'instant, utiliser valeur initiale (TODO: prix temps réel)
-                            position_value = position.get('value_usdt', 0)
-                            total_portfolio_value += position_value
+                            positions_value += position.get('value_usdt', 0)
                 
-                # Mettre à jour les nouveaux labels
-                self.balance_label.config(text=f"{balance:.2f} USDT")
+                # 3. VALEUR TOTALE = Balance disponible + Positions ouvertes
+                total_portfolio_value = available_balance + positions_value
+                
+                # 4. P&L TOTAL = Valeur totale actuelle - Balance initiale
+                initial_balance = self.bot.config_manager.get('INITIAL_BALANCE', 1000.0)
+                if isinstance(initial_balance, str):
+                    initial_balance = float(initial_balance)
+                
+                total_pnl = total_portfolio_value - initial_balance
+                pnl_percent = (total_pnl / initial_balance) * 100 if initial_balance > 0 else 0
+                
+                # Mettre à jour les labels
+                self.balance_label.config(text=f"{available_balance:.2f} USDT")
                 self.total_value_label.config(text=f"{total_portfolio_value:.2f} USDT")
                 self.positions_count_label.config(text=f"{open_positions_count}")
                 
-                # P&L Total (changement depuis balance initiale)
-                if hasattr(self.bot, 'total_pnl'):
-                    pnl_percent = (self.bot.total_pnl / 1000) * 100 if self.bot.total_pnl != 0 else 0
-                    pnl_color = '#00ff88' if self.bot.total_pnl >= 0 else '#ff4444'
-                    
-                    self.pnl_label.config(
-                        text=f"{self.bot.total_pnl:+.2f} USDT ({pnl_percent:+.1f}%)",
-                        fg=pnl_color
-                    )
+                # P&L avec couleur correcte
+                pnl_color = '#00ff88' if total_pnl >= 0 else '#ff4444'
+                self.pnl_label.config(
+                    text=f"{total_pnl:+.2f} USDT ({pnl_percent:+.1f}%)",
+                    fg=pnl_color
+                )
+                
+                # Debug pour comprendre le calcul
+                print(f"💰 DEBUG PORTFOLIO:")
+                print(f"   Balance disponible: {available_balance:.2f} USDT")
+                print(f"   Valeur positions: {positions_value:.2f} USDT")
+                print(f"   Valeur totale: {total_portfolio_value:.2f} USDT")
+                print(f"   Balance initiale: {initial_balance:.2f} USDT")
+                print(f"   P&L total: {total_pnl:+.2f} USDT ({pnl_percent:+.1f}%)")
                 
                 # Statistiques de trading
                 if hasattr(self.bot, 'total_trades'):
