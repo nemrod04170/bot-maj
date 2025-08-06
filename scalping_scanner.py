@@ -22,10 +22,10 @@ def is_healthy_candle(ohlc, min_candle_body_ratio=None, max_upper_wick_ratio=Non
     Vérifie que la dernière bougie n'est pas un 'fake pump' (trop de mèche).
     ohlc : tuple (open, high, low, close)
     """
-    # Utiliser les valeurs du config.txt si disponibles
+    # Utiliser les valeurs du config.txt si disponibles (conversion en nombres)
     if config:
-        min_candle_body_ratio = config.get('candle_body_ratio_min', 0.6) if min_candle_body_ratio is None else min_candle_body_ratio
-        max_upper_wick_ratio = config.get('candle_upper_wick_max', 0.3) if max_upper_wick_ratio is None else max_upper_wick_ratio
+        min_candle_body_ratio = float(config.get('candle_body_ratio_min', 0.6)) if min_candle_body_ratio is None else min_candle_body_ratio
+        max_upper_wick_ratio = float(config.get('candle_upper_wick_max', 0.3)) if max_upper_wick_ratio is None else max_upper_wick_ratio
     else:
         min_candle_body_ratio = min_candle_body_ratio or 0.6
         max_upper_wick_ratio = max_upper_wick_ratio or 0.3
