@@ -1153,14 +1153,28 @@ class ScalpingBotGUI:
                     color = '#00aa44'  # Vert pour BUY
                     arrow = '📈'       # Flèche montante
                     
+                    # Récupérer les infos du Take Profit dynamique
+                    dynamic_tp_percent = trade_data.get('dynamic_tp_percent', 1.5)
+                    
+                    # Déterminer le niveau de potentiel pour l'affichage
+                    if dynamic_tp_percent >= 3.0:
+                        potential_level = "ÉLEVÉ 🔥"
+                        potential_color = "#ff6600"
+                    elif dynamic_tp_percent >= 2.0:
+                        potential_level = "MOYEN 📈"
+                        potential_color = "#ffaa00"
+                    else:
+                        potential_level = "STABLE 📊"
+                        potential_color = "#00aaff"
+                    
                     # Affichage selon le système
                     if system_type == 'SIMPLE_STOP_TAKE_PROFIT' and tp_str:
-                        # NOUVEAU système : Afficher Stop Loss + Take Profit (BUY uniquement)
+                        # NOUVEAU système avec Take Profit Dynamique
                         trade_text = f"""[{timestamp}] 🎮 POSITION OUVERTE: {symbol}
-   {arrow} BUY {operation} | Momentum: {change_24h:+.2f}%
+   {arrow} BUY {operation} | Potentiel: {potential_level} ({dynamic_tp_percent:.1f}%)
    💰 Prix: {price_str} | Quantité: {quantity:.8f}
    🛑 Stop Loss: {sl_str} | 🎯 Take Profit: {tp_str}
-   💸 Valeur: {value_usdt:.2f}€ | ID: {order_id}
+   💸 Valeur: {value_usdt:.2f}€ | Momentum: {change_24h:+.2f}%
 
 """
                     else:
