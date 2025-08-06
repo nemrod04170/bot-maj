@@ -1204,40 +1204,28 @@ class CryptoTradingBot:
                     # Calculer performance
                     price_change_percent = ((current_price - entry_price) / entry_price) * 100
                     
-                    # RÈGLE 1: STOP LOSS (Priorité absolue)
-                    if direction == 'LONG' and current_price <= stop_loss:
+                    # RÈGLE 1: STOP LOSS (Priorité absolue) - TOUJOURS LONG
+                    if current_price <= stop_loss:
                         self.log(f"🛑 {symbol}: STOP LOSS déclenché à {current_price:.6f} (-{abs(price_change_percent):.2f}%)")
                         self._close_position_with_reason(position, current_price, "STOP_LOSS")
                         return
-                    elif direction == 'SHORT' and current_price >= stop_loss:
-                        self.log(f"🛑 {symbol}: STOP LOSS déclenché à {current_price:.6f} (+{abs(price_change_percent):.2f}%)")
-                        self._close_position_with_reason(position, current_price, "STOP_LOSS")
-                        return
                     
-                    # RÈGLE 2: TAKE PROFIT (Objectif atteint)
-                    if direction == 'LONG' and current_price >= take_profit:
+                    # RÈGLE 2: TAKE PROFIT (Objectif atteint) - TOUJOURS LONG
+                    if current_price >= take_profit:
                         self.log(f"🎉 {symbol}: TAKE PROFIT atteint à {current_price:.6f} (+{price_change_percent:.2f}%)")
                         self._close_position_with_reason(position, current_price, "TAKE_PROFIT")
                         return
-                    elif direction == 'SHORT' and current_price <= take_profit:
-                        self.log(f"🎉 {symbol}: TAKE PROFIT atteint à {current_price:.6f} (-{abs(price_change_percent):.2f}%)")
-                        self._close_position_with_reason(position, current_price, "TAKE_PROFIT")
-                        return
                     
-                    # RÈGLE 3: SURVEILLANCE INTELLIGENTE (si activée)
+                    # RÈGLE 3: SURVEILLANCE INTELLIGENTE (si activée) - TOUJOURS LONG
                     if intelligent_monitoring:
-                        # Si on est en profit mais pas encore au take profit
-                        if ((direction == 'LONG' and current_price > entry_price) or 
-                            (direction == 'SHORT' and current_price < entry_price)):
-                            
+                        # Si on est en profit mais pas encore au take profit (LONG uniquement)
+                        if current_price > entry_price:
                             # TODO: Calculer momentum et RSI actuels
                             # Pour l'instant, logique simple : si profit > 0.8%, surveiller de près
-                            if abs(price_change_percent) > 0.8:
-                                # Momentum positif → attendre encore un peu
-                                if price_change_percent > 0:
-                                    self.log(f"📈 {symbol}: En profit +{price_change_percent:.2f}% - Surveillance renforcée")
-                                    time.sleep(1)  # Check plus fréquent
-                                    continue
+                            if price_change_percent > 0.8:
+                                self.log(f"📈 {symbol}: En profit +{price_change_percent:.2f}% - Surveillance renforcée")
+                                time.sleep(1)  # Check plus fréquent
+                                continue
                     
                     # RÈGLE 4: TIMEOUT (Sécurité)
                     time_elapsed = (datetime.now() - position['entry_time']).total_seconds()
