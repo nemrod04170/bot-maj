@@ -33,11 +33,11 @@ EMA_SLOW = 21                  # EMA lente pour signaux
 
 # CRITÈRES DE SCALPING
 # ====================
-pump_min_3min = 1.2            # Pump minimum sur 3 minutes (%)
-pump_max_3min = 2.5            # Pump maximum sur 3 minutes (%)
-min_volume_btc_eth = 70000000  # Volume minimum BTC/ETH (24h)
-min_volume_altcoins = 12000000 # Volume minimum altcoins (24h) 
-min_volume_microcaps = 2000000 # Volume minimum microcaps (24h)
+pump_min_3min = 0.5            # Pump minimum sur 3 minutes (%) - ASSOUPLI POUR TEST
+pump_max_3min = 3.0            # Pump maximum sur 3 minutes (%) - ASSOUPLI POUR TEST
+min_volume_btc_eth = 30000000  # Volume minimum BTC/ETH (24h) - ASSOUPLI POUR TEST
+min_volume_altcoins = 5000000  # Volume minimum altcoins (24h) - ASSOUPLI POUR TEST
+min_volume_microcaps = 1000000 # Volume minimum microcaps (24h) - ASSOUPLI POUR TEST
 MIN_VOLUME_BTC_ETH = 70000000  # Volume minimum BTC/ETH (alternative)
 MIN_VOLUME_ALTCOINS = 12000000 # Volume minimum altcoins (alternative)
 MIN_VOLUME_MICROCAPS = 2000000 # Volume minimum microcaps (alternative)
