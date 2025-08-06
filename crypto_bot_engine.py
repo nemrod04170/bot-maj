@@ -1377,14 +1377,22 @@ class CryptoTradingBot:
                 order_type = "TAKER"
             
             # Calculs stop loss seulement (take profit supprimé - système 3 couches utilisé)
+            # NOUVEAU SYSTÈME SIMPLIFIÉ : STOP LOSS + TAKE PROFIT FIXE
+            stop_loss_buy_multiplier = self.config_manager.get('STOP_LOSS_BUY_MULTIPLIER')
+            stop_loss_sell_multiplier = self.config_manager.get('STOP_LOSS_SELL_MULTIPLIER')
+            take_profit_buy_multiplier = self.config_manager.get('TAKE_PROFIT_BUY_MULTIPLIER')
+            take_profit_sell_multiplier = self.config_manager.get('TAKE_PROFIT_SELL_MULTIPLIER')
+            
             if signal == 'BUY':
                 operation = 'ACHAT'
                 direction = 'LONG'
-                stop_loss = entry_price * (stop_loss_buy_multiplier or 0.996)
+                stop_loss = entry_price * (stop_loss_buy_multiplier or 0.995)    # -0.5%
+                take_profit = entry_price * (take_profit_buy_multiplier or 1.015) # +1.5%
             else:
                 operation = 'VENTE'
                 direction = 'SHORT'
-                stop_loss = entry_price * (stop_loss_sell_multiplier or 1.004)
+                stop_loss = entry_price * (stop_loss_sell_multiplier or 1.005)    # +0.5%
+                take_profit = entry_price * (take_profit_sell_multiplier or 0.985) # -1.5%
             
             # Calculer la taille de position selon la stratégie OPTIMISÉE (depuis config.txt UNIQUEMENT)
             max_position_per_crypto = self.config_manager.get('order_size') or self.config_manager.get('POSITION_SIZE_USDT')
