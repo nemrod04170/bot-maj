@@ -212,8 +212,22 @@ class ConfigManager:
         # Pas de sauvegarde automatique
     
     def get(self, key: str, default=None):
-        """Récupère une valeur - utilise UNIQUEMENT les valeurs du config.txt"""
-        return self.config.get(key, default)
+        """Récupère une valeur - avec fallback sécurisé"""
+        value = self.config.get(key, default)
+        # Si la valeur est None et qu'on a une clé similaire, essayer de la trouver
+        if value is None and default is None:
+            # Essayer des variations courantes de noms de clés
+            if key == 'SCAN_INTERVAL_MINUTES':
+                value = self.config.get('scan_interval_minutes', 1)
+            elif key == 'MAX_CRYPTOS':
+                value = self.config.get('max_cryptos', 20)
+            elif key == 'AUTO_SCAN_ENABLED':
+                value = self.config.get('auto_scan_enabled', True)
+            elif key == 'SIMULATION_MODE':
+                value = self.config.get('simulate_trades', True)
+            elif key == 'order_size' or key == 'POSITION_SIZE_USDT':
+                value = self.config.get('order_size') or self.config.get('POSITION_SIZE_USDT', 50)
+        return value
     
     def set(self, key: str, value: Any):
         """Définit une valeur"""
@@ -227,28 +241,28 @@ class ConfigManager:
     def get_exchange_config(self) -> Dict[str, Any]:
         """Configuration Exchange"""
         return {
-            'name': self.get('EXCHANGE_NAME'),
+            'name': self.get('EXCHANGE_NAME', 'binance'),
             'api_key': API_KEY,
             'secret': API_SECRET,
-            'testnet': self.get('TESTNET_MODE')
+            'testnet': self.get('TESTNET_MODE', False)
         }
     
     def get_trading_config(self) -> Dict[str, Any]:
         """Configuration Trading"""
         return {
-            'simulation_mode': self.get('SIMULATION_MODE'),
-            'timeframe': self.get('TIMEFRAME'),
-            'auto_start': self.get('AUTO_START_BOT'),
-            'max_position_size': self.get('MAX_POSITION_SIZE'),
-            'max_total_exposure': self.get('MAX_TOTAL_EXPOSURE'),
-            'max_daily_loss': self.get('MAX_DAILY_LOSS'),
-            'stop_loss_percent': self.get('stop_loss_percent') or self.get('STOP_LOSS_PERCENT'),
-            'take_profit_percent': self.get('take_profit_percent') or self.get('TAKE_PROFIT_PERCENT')
+            'simulation_mode': self.get('SIMULATION_MODE', True),
+            'timeframe': self.get('TIMEFRAME', '1h'),
+            'auto_start': self.get('AUTO_START_BOT', True),
+            'max_position_size': self.get('MAX_POSITION_SIZE', 0.05),
+            'max_total_exposure': self.get('MAX_TOTAL_EXPOSURE', 0.20),
+            'max_daily_loss': self.get('MAX_DAILY_LOSS', 0.05),
+            'stop_loss_percent': self.get('stop_loss_percent', 0.5) or self.get('STOP_LOSS_PERCENT', 2.0),
+            'take_profit_percent': self.get('take_profit_percent', 0.8) or self.get('TAKE_PROFIT_PERCENT', 6.0)
         }
     
     def get_scan_config(self) -> Dict[str, Any]:
         """Configuration Auto-scan avec critères éprouvés"""
-        watchlist_raw = self.get('WATCHLIST')
+        watchlist_raw = self.get('WATCHLIST', '')
         
         # Si watchlist vide = auto-scan
         if not watchlist_raw or str(watchlist_raw).strip() == '':
@@ -261,63 +275,63 @@ class ConfigManager:
         return {
             'watchlist': watchlist,
             'auto_scan_enabled': len(watchlist) == 0,  # Auto-scan si liste vide
-            'scan_interval': self.get('SCAN_INTERVAL_MINUTES'),
-            'max_cryptos': self.get('MAX_CRYPTOS'),
+            'scan_interval': self.get('SCAN_INTERVAL_MINUTES', 1),
+            'max_cryptos': self.get('MAX_CRYPTOS', 20),
             
             # CRITÈRES ÉPROUVÉS DE SCALPING - utiliser config.txt prioritairement
-            'MIN_VOLUME_BTC_ETH': self.get('min_volume_btc_eth') or self.get('MIN_VOLUME_BTC_ETH'),
-            'MIN_VOLUME_ALTCOINS': self.get('min_volume_altcoins') or self.get('MIN_VOLUME_ALTCOINS'),
-            'MIN_VOLUME_MICROCAPS': self.get('min_volume_microcaps') or self.get('MIN_VOLUME_MICROCAPS'),
-            'VOLUME_SPIKE_THRESHOLD': self.get('VOLUME_SPIKE_THRESHOLD'),
-            'MIN_PUMP_3MIN': self.get('pump_min_3min') or self.get('MIN_PUMP_3MIN'),
-            'MAX_PUMP_3MIN': self.get('pump_max_3min') or self.get('MAX_PUMP_3MIN'),
-            'RSI_PERIOD': self.get('RSI_PERIOD'),
-            'RSI_OVERSOLD': self.get('rsi_min') or self.get('RSI_OVERSOLD'),
-            'RSI_OVERBOUGHT': self.get('rsi_max') or self.get('RSI_OVERBOUGHT'),
-            'EMA_FAST': self.get('ema_fast') or self.get('EMA_FAST'),
-            'EMA_SLOW': self.get('ema_slow') or self.get('EMA_SLOW'),
+            'MIN_VOLUME_BTC_ETH': self.get('min_volume_btc_eth', 70000000) or self.get('MIN_VOLUME_BTC_ETH', 70000000),
+            'MIN_VOLUME_ALTCOINS': self.get('min_volume_altcoins', 12000000) or self.get('MIN_VOLUME_ALTCOINS', 12000000),
+            'MIN_VOLUME_MICROCAPS': self.get('min_volume_microcaps', 2000000) or self.get('MIN_VOLUME_MICROCAPS', 2000000),
+            'VOLUME_SPIKE_THRESHOLD': self.get('VOLUME_SPIKE_THRESHOLD', 130),
+            'MIN_PUMP_3MIN': self.get('pump_min_3min', 1.2) or self.get('MIN_PUMP_3MIN', 1.2),
+            'MAX_PUMP_3MIN': self.get('pump_max_3min', 2.5) or self.get('MAX_PUMP_3MIN', 2.5),
+            'RSI_PERIOD': self.get('RSI_PERIOD', 14),
+            'RSI_OVERSOLD': self.get('rsi_min', 28) or self.get('RSI_OVERSOLD', 28),
+            'RSI_OVERBOUGHT': self.get('rsi_max', 72) or self.get('RSI_OVERBOUGHT', 72),
+            'EMA_FAST': self.get('ema_fast', 8) or self.get('EMA_FAST', 8),
+            'EMA_SLOW': self.get('ema_slow', 20) or self.get('EMA_SLOW', 20),
             
             # FILTRES DE QUALITÉ AVANCÉS - utiliser config.txt prioritairement
-            'MAX_SPREAD_PERCENT': self.get('spread_max') or self.get('MAX_SPREAD_PERCENT'),
-            'MIN_ORDER_BOOK_DEPTH': self.get('orderbook_depth_min') or self.get('MIN_ORDER_BOOK_DEPTH'),
-            'MIN_REQUIRED_SIGNALS': self.get('signals_required') or self.get('MIN_REQUIRED_SIGNALS')
+            'MAX_SPREAD_PERCENT': self.get('spread_max', 0.08) or self.get('MAX_SPREAD_PERCENT', 0.08),
+            'MIN_ORDER_BOOK_DEPTH': self.get('orderbook_depth_min', 100) or self.get('MIN_ORDER_BOOK_DEPTH', 100),
+            'MIN_REQUIRED_SIGNALS': self.get('signals_required', 3) or self.get('MIN_REQUIRED_SIGNALS', 3)
         }
     
     def get_signal_config(self) -> Dict[str, Any]:
         """Configuration Signaux"""
         return {
-            'threshold': self.get('SIGNAL_THRESHOLD'),
-            'min_confidence': self.get('MIN_CONFIDENCE'),
+            'threshold': self.get('SIGNAL_THRESHOLD', 35),
+            'min_confidence': self.get('MIN_CONFIDENCE', 0.6),
             'weights': {
-                'rsi': self.get('RSI_WEIGHT'),
-                'macd': self.get('MACD_WEIGHT'),
-                'ema': self.get('EMA_WEIGHT'),
-                'volume': self.get('VOLUME_WEIGHT'),
-                'momentum': self.get('MOMENTUM_WEIGHT')
+                'rsi': self.get('RSI_WEIGHT', 25),
+                'macd': self.get('MACD_WEIGHT', 30),
+                'ema': self.get('EMA_WEIGHT', 25),
+                'volume': self.get('VOLUME_WEIGHT', 10),
+                'momentum': self.get('MOMENTUM_WEIGHT', 10)
             },
             'rsi': {
-                'period': self.get('RSI_PERIOD'),
-                'oversold': self.get('rsi_min') or self.get('RSI_OVERSOLD'),
-                'overbought': self.get('rsi_max') or self.get('RSI_OVERBOUGHT')
+                'period': self.get('RSI_PERIOD', 14),
+                'oversold': self.get('rsi_min', 28) or self.get('RSI_OVERSOLD', 28),
+                'overbought': self.get('rsi_max', 72) or self.get('RSI_OVERBOUGHT', 72)
             },
             'macd': {
-                'fast': self.get('MACD_FAST'),
-                'slow': self.get('MACD_SLOW'),
-                'signal': self.get('MACD_SIGNAL')
+                'fast': self.get('MACD_FAST', 12),
+                'slow': self.get('MACD_SLOW', 26),
+                'signal': self.get('MACD_SIGNAL', 9)
             },
             'ema': {
-                'fast': self.get('ema_fast') or self.get('EMA_FAST'),
-                'medium': self.get('EMA_MEDIUM'),
-                'slow': self.get('ema_slow') or self.get('EMA_SLOW')
+                'fast': self.get('ema_fast', 8) or self.get('EMA_FAST', 8),
+                'medium': self.get('EMA_MEDIUM', 21),
+                'slow': self.get('ema_slow', 20) or self.get('EMA_SLOW', 20)
             }
         }
     
     def get_interface_config(self) -> Dict[str, Any]:
         """Configuration Interface"""
         return {
-            'chart_update_seconds': self.get('CHART_UPDATE_SECONDS'),
-            'log_max_lines': self.get('LOG_MAX_LINES'),
-            'theme_dark': self.get('THEME_DARK')
+            'chart_update_seconds': self.get('CHART_UPDATE_SECONDS', 1),
+            'log_max_lines': self.get('LOG_MAX_LINES', 100),
+            'theme_dark': self.get('THEME_DARK', True)
         }
     
     def validate_config(self) -> List[str]:
