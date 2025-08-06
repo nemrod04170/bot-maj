@@ -1164,9 +1164,9 @@ class ScalpingBotGUI:
 
 """
                     else:
-                        # Ancien système : Afficher seulement Stop Loss
-                        trade_text = f"""[{timestamp}] 🎮 TRADE OUVERT: {symbol}
-   {arrow} {signal} {operation} | Momentum: {change_24h:+.2f}%
+                        # Ancien système : Afficher seulement Stop Loss (BUY uniquement)
+                        trade_text = f"""[{timestamp}] 🎮 POSITION OUVERTE: {symbol}
+   {arrow} BUY {operation} | Momentum: {change_24h:+.2f}%
    💰 Prix: {price_str} | Quantité: {quantity:.8f}
    🎯 Stop Loss: {sl_str}
    💸 Valeur: {value_usdt:.2f}€ | ID: {order_id}
