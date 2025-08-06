@@ -276,14 +276,19 @@ class TestCryptoTradingBot(unittest.TestCase):
             self.assertIn('def add_closed_trade_to_history', content, 
                          "GUI should have add_closed_trade_to_history method")
             
-            # Check for 2-line formatting elements
+            # Check for 2-line formatting elements (French version)
             formatting_elements = [
-                'Line 1:', 'Line 2:', 'entry_price', 'exit_price', 'net_pnl', 
-                'exit_reason', 'total_fees', 'timestamp'
+                'LIGNE 1:', 'LIGNE 2:', 'line1', 'line2', 'entry_price', 'exit_price', 'net_pnl', 
+                'exit_reason', 'total_fees', 'timestamp', 'trade_lines'
             ]
             
             for element in formatting_elements:
-                self.assertIn(element, content, f"GUI should contain {element} for formatting")
+                self.assertIn(element, content, f"GUI should contain {element} for 2-line formatting")
+            
+            # Check for specific 2-line implementation details
+            self.assertIn('line1 + line2', content, "GUI should combine line1 and line2")
+            self.assertIn('Informations principales', content, "GUI should have main info line")
+            self.assertIn('Détails techniques', content, "GUI should have details line")
             
             # Create a sample closed trade to verify data structure compatibility
             closed_trade = {
