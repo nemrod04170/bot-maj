@@ -1007,6 +1007,10 @@ class ScalpingBotGUI:
                     fg=pnl_color
                 )
                 
+                # NOUVEAU: Frais totaux
+                total_fees = getattr(self.bot, 'total_fees', 0.0)
+                self.fees_label.config(text=f"-{total_fees:.2f} USDT")
+                
                 # Debug pour comprendre le calcul
                 print(f"💰 DEBUG PORTFOLIO:")
                 print(f"   Balance disponible: {available_balance:.2f} USDT")
@@ -1014,6 +1018,7 @@ class ScalpingBotGUI:
                 print(f"   Valeur totale: {total_portfolio_value:.2f} USDT")
                 print(f"   Balance initiale: {initial_balance:.2f} USDT")
                 print(f"   P&L total: {total_pnl:+.2f} USDT ({pnl_percent:+.1f}%)")
+                print(f"   Frais totaux: -{total_fees:.2f} USDT")
                 
                 # Statistiques de trading
                 if hasattr(self.bot, 'total_trades'):
