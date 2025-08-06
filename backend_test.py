@@ -537,14 +537,14 @@ def run_backend_tests():
     test_results = []
     
     test_methods = [
-        'test_min_profit_auto_scalping_configuration',
-        'test_close_position_with_reason_function',
-        'test_close_position_scalping_na_fix',
-        'test_smart_scalping_logic',
-        'test_position_closing_methods_use_reason',
-        'test_trade_duration_calculation_structure',
-        'test_portfolio_state_closed_trades_structure',
-        'test_config_manager_functionality'
+        'test_trading_strategy_fix_buy_rising_trends',
+        'test_pnl_calculation_fix_realized_plus_unrealized', 
+        'test_signal_generation_logic_positive_momentum',
+        'test_portfolio_pnl_accuracy_actual_trades',
+        'test_config_manager_functionality',
+        'test_crypto_bot_engine_structure',
+        'test_gui_structure',
+        'test_trade_data_structure'
     ]
     
     for method in test_methods:
