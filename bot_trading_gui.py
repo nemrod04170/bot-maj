@@ -648,11 +648,11 @@ class ScalpingBotGUI:
             
         if self.bot.simulation_mode:
             # Mode simulation - Reset complet avec valeurs du config.txt
-            initial_balance = self.bot.initial_balance  # Utiliser la valeur du config.txt
+            initial_balance = float(self.bot.initial_balance)  # Conversion en nombre
             
             result = messagebox.askyesno(
                 "Reset Simulation", 
-                f"Êtes-vous sûr de vouloir :\n\n• Remettre la balance à {initial_balance}€\n• Fermer toutes les positions\n• Effacer l'historique\n\nCette action est irréversible !"
+                f"Êtes-vous sûr de vouloir :\n\n• Remettre la balance à {initial_balance:.2f}€\n• Fermer toutes les positions\n• Effacer l'historique\n\nCette action est irréversible !"
             )
             
             if result:
