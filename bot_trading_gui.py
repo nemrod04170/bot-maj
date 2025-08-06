@@ -751,7 +751,7 @@ class ScalpingBotGUI:
                 'last_save': datetime.now().isoformat()
             }
             
-            with open('/app/bot_state.json', 'w') as f:
+            with open('bot_state.json', 'w') as f:
                 json.dump(state, f, indent=2)
                 
             self.log_text.insert(tk.END, f"💾 État sauvegardé: {len(self.bot.open_positions)} positions\n")
