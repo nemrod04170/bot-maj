@@ -344,9 +344,9 @@ class TestCryptoTradingBot(unittest.TestCase):
             self.assertIn('def __init__', content, "GUI should have __init__ method")
             self.assertIn('def add_closed_trade_to_history', content, "GUI should have add_closed_trade_to_history method")
             
-            # Check for the new 2-line display functionality
-            self.assertIn('Line 1:', content, "GUI should have 2-line display formatting")
-            self.assertIn('Line 2:', content, "GUI should have 2-line display formatting")
+            # Check for the new 2-line display functionality (French implementation)
+            self.assertIn('LIGNE 1:', content, "GUI should have French 2-line display formatting")
+            self.assertIn('LIGNE 2:', content, "GUI should have French 2-line display formatting")
             
             print("✅ GUI Structure: PASSED")
             return True
