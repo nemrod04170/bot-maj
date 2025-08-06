@@ -1339,7 +1339,15 @@ class CryptoTradingBot:
                     if current_price >= take_profit:
                         if tp_reached_time is None:
                             tp_reached_time = datetime.now()
+                            highest_price_after_tp = current_price  # Initialiser le plus haut prix
                             self.log(f"🎯 {symbol}: Take Profit initial atteint ! Surveillance intelligente activée")
+                        else:
+                            # Mettre à jour le plus haut prix atteint depuis TP
+                            if 'highest_price_after_tp' not in locals():
+                                highest_price_after_tp = current_price
+                            if current_price > highest_price_after_tp:
+                                highest_price_after_tp = current_price
+                                self.log(f"📈 {symbol}: Nouveau plus haut après TP: {highest_price_after_tp:.6f}")
                         
                         if intelligent_tracking and len(price_history) >= min_samples:
                             
@@ -1378,12 +1386,21 @@ class CryptoTradingBot:
                                 self._close_position_with_reason(position, current_price, "TP_MOMENTUM_DECLINE")
                                 return
                             
-                            # VENTE 3: Prix redescend sous le TP original (protection)
-                            elif current_price < take_profit * 0.995:  # -0.5% sous TP original
-                                self.log(f"⚠️ {symbol}: VENTE - Prix redescend sous TP original")
-                                self.log(f"   Prix: {current_price:.6f} | TP original: {take_profit:.6f}")
-                                self._close_position_with_reason(position, current_price, "TP_PRICE_DECLINE")
-                                return
+                            # VENTE 3: Prix redescend d'un % significatif depuis le plus haut atteint
+                            tp_trailing_stop_percent = self.config_manager.get('TP_TRAILING_STOP_PERCENT', 1.0)  # 1% par défaut
+                            if isinstance(tp_trailing_stop_percent, str):
+                                tp_trailing_stop_percent = float(tp_trailing_stop_percent)
+                            
+                            if 'highest_price_after_tp' in locals():
+                                price_drop_from_high = ((highest_price_after_tp - current_price) / highest_price_after_tp) * 100
+                                
+                                if price_drop_from_high >= tp_trailing_stop_percent:
+                                    profit_from_entry = ((current_price - entry_price) / entry_price) * 100
+                                    self.log(f"📉 {symbol}: VENTE TRAILING STOP après TP")
+                                    self.log(f"   Plus haut: {highest_price_after_tp:.6f} | Actuel: {current_price:.6f} | Baisse: -{price_drop_from_high:.2f}%")
+                                    self.log(f"   Profit total: +{profit_from_entry:.2f}%")
+                                    self._close_position_with_reason(position, current_price, "TP_TRAILING_STOP")
+                                    return
                             
                             # VENTE 4: Trop longtemps au-dessus du TP sans momentum fort
                             else:
@@ -1403,12 +1420,6 @@ class CryptoTradingBot:
                             self.log(f"🎉 {symbol}: TAKE PROFIT classique à {current_price:.6f}")
                             self._close_position_with_reason(position, current_price, "TAKE_PROFIT")
                             return
-                    
-                    # Si on était au-dessus du TP mais prix redescend sous TP → Vente immédiate
-                    elif tp_reached_time is not None and current_price < take_profit:
-                        self.log(f"📉 {symbol}: VENTE - Prix redescend sous TP après l'avoir dépassé")
-                        self._close_position_with_reason(position, current_price, "TP_REVERSION")
-                        return
                     
                     # === VENTE PRÉVENTIVE SUR MOMENTUM NÉGATIF ===
                     
