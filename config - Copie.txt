@@ -1,0 +1,46 @@
+# ==========================
+#  CONFIG BOT SCALPING PRO
+# ==========================
+
+# Taille d’ordre max par trade (USD ou USDT)
+order_size = 100
+
+# Nombre max de positions ouvertes
+max_open_positions = 3
+
+# Risque/gestion de la perte
+stop_loss_percent = 1.2        # Stop Loss (%) : exemple 1.2 = -1.2%
+trailing_start_percent = 0.7   # Gain minimum pour activer le trailing stop (%)
+trailing_step_percent = 0.5    # Trailing Stop (%) : distance de suivi une fois activé
+timeout_seconds = 600          # Durée max d'un trade avant clôture auto (secondes)
+take_profit_percent = 2.0      # Take profit optionnel (%), ou laisser vide pour trailing uniquement
+
+# --- Indicateurs techniques ---
+ema_fast = 9                   # EMA rapide (période)
+ema_slow = 21                  # EMA lente (période)
+rsi_min = 25                   # RSI minimum (zone de survente)
+rsi_max = 75                   # RSI maximum (zone de surachat)
+
+# --- Critères de pump / détection ---
+pump_min_3min = 0.8            # Pump minimal sur 3 minutes (%)
+pump_max_3min = 2.0            # Pump maximal sur 3 minutes (%)
+min_volume_btc_eth = 50000000  # Volume min BTC/ETH (24h)
+min_volume_altcoins = 8000000  # Volume min altcoins (24h)
+min_volume_microcaps = 1000000 # Volume min microcaps (24h)
+spread_max = 0.1               # Spread max autorisé (%)
+orderbook_depth_min = 50       # Profondeur minimum du carnet (USDT)
+signals_required = 2           # Nombre mini de signaux pour valider une opportunité
+
+# --- Sélection des paires ---
+filter_suffixes = USDT,BTC,ETH # Liste des suffixes autorisés (séparés par des virgules)
+
+# --- Filtre chandelle ---
+candle_body_ratio_min = 0.6    # Corps de la bougie ≥ X% du range (exemple : 0.6 = 60%)
+candle_upper_wick_max = 0.3    # Mèche supérieure ≤ X% du range (ex : 0.3 = 30%)
+
+# --- Divers / sécurité ---
+max_daily_loss_percent = 5     # Perte max quotidienne (%)
+max_total_exposure = 2000      # Exposition max (USD/USDT)
+simulate_trades = False        # Simulation uniquement (True/False)
+
+# Toutes les clés API doivent être dans .env (jamais ici !)
