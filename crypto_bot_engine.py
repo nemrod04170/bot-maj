@@ -1346,10 +1346,16 @@ class CryptoTradingBot:
                 self.log(f"✅ {position['symbol']}: Position fermée par TRAILING STOP")
             elif reason == "TIMEOUT":
                 self.log(f"⏰ {position['symbol']}: Position fermée par TIMEOUT")
+            elif reason == "TIMEOUT_SECURITY":
+                self.log(f"⏰ {position['symbol']}: Position fermée par TIMEOUT DE SÉCURITÉ")
             elif reason == "STOP_LOSS":
                 self.log(f"🛑 {position['symbol']}: Position fermée par STOP LOSS")
             elif reason == "TAKE_PROFIT":
                 self.log(f"🎉 {position['symbol']}: Position fermée par TAKE PROFIT")
+            elif reason == "TAKE_PROFIT_INTELLIGENT":
+                self.log(f"🧠 {position['symbol']}: Position fermée par TAKE PROFIT INTELLIGENT")
+            elif reason == "MOMENTUM_DECLINE":
+                self.log(f"⚠️ {position['symbol']}: Position fermée par DÉCLIN DE MOMENTUM")
             else:
                 self.log(f"✅ {position['symbol']}: Position fermée ({reason})")
                 
