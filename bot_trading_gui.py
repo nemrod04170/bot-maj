@@ -1065,18 +1065,32 @@ class ScalpingBotGUI:
             current_text = self.positions_text.get(1.0, tk.END)
             lines = current_text.split('\n')
             
-            # Filtrer les lignes qui contiennent ce symbol et sont des positions ouvertes
+            # Filtrer les lignes - Supprimer TOUT le bloc de la position fermée
             filtered_lines = []
+            skip_until_empty_line = False
+            
             for line in lines:
-                # Garder seulement les lignes qui ne sont pas des positions ouvertes de ce symbol
-                if symbol not in line or 'TRADE OUVERT' not in line:
-                    filtered_lines.append(line)
+                # Si on trouve une ligne avec ce symbole ET "TRADE OUVERT", commencer à skip
+                if symbol in line and 'TRADE OUVERT' in line:
+                    skip_until_empty_line = True
+                    print(f"🗑️ Suppression position fermée: {symbol}")
+                    continue
+                
+                # Si on est en mode skip, ignorer les lignes jusqu'à une ligne vide
+                if skip_until_empty_line:
+                    if line.strip() == '':  # Ligne vide = fin du bloc
+                        skip_until_empty_line = False
+                    continue
+                
+                # Garder toutes les autres lignes
+                filtered_lines.append(line)
             
             # Réafficher le texte filtré
             self.positions_text.delete(1.0, tk.END)
             self.positions_text.insert(1.0, '\n'.join(filtered_lines))
             
             self.positions_text.config(state='disabled')
+            print(f"✅ Position {symbol} supprimée de l'affichage")
             
         except Exception as e:
             print(f"❌ Erreur suppression position fermée: {e}")
