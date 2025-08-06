@@ -1205,6 +1205,10 @@ class CryptoTradingBot:
             tp_reached_time = None
             extended_tp = take_profit  # TP peut être étendu si momentum fort
             
+            # Variables pour trailing stop intelligent
+            highest_profit = 0.0  # Plus haut profit atteint
+            trailing_activated = False
+            
             self.log(f"🧠 SURVEILLANCE INTELLIGENTE: {symbol}")
             self.log(f"   🎯 TP initial: {take_profit:.6f} | Extension max: +{max_tp_extension}%")
             
