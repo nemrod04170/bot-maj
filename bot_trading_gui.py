@@ -1025,6 +1025,36 @@ class ScalpingBotGUI:
         # Exécuter dans le thread principal
         self.root.after(0, update_gui)
     
+    def refresh_all_displays(self):
+        """Rafraîchit complètement tous les affichages après un reset"""
+        try:
+            # Nettoyer complètement l'affichage des positions
+            self.positions_text.config(state='normal')
+            self.positions_text.delete(1.0, tk.END)
+            
+            # Si aucune position ouverte, afficher message de reset
+            if not self.bot or not hasattr(self.bot, 'open_positions') or not self.bot.open_positions:
+                self.positions_text.insert(1.0, "🔄 SIMULATION RÉINITIALISÉE\n\n✅ Aucune position ouverte\n✅ Balance remise à zéro\n\n")
+            else:
+                # S'il reste des positions (ne devrait pas arriver après reset), les afficher
+                for position in self.bot.open_positions:
+                    if position.get('status') == 'open':
+                        # Réafficher la position
+                        pass
+                        
+            self.positions_text.config(state='disabled')
+            
+            # Nettoyer aussi l'historique
+            self.trades_history_text.config(state='normal') 
+            self.trades_history_text.delete(1.0, tk.END)
+            self.trades_history_text.insert(1.0, "🔄 Historique réinitialisé - Aucun trade fermé\n")
+            self.trades_history_text.config(state='disabled')
+            
+            print("✅ Affichages rafraîchis après reset")
+            
+        except Exception as e:
+            print(f"❌ Erreur rafraîchissement affichages: {e}")
+    
     def remove_closed_position_from_gui(self, symbol):
         """Efface les positions fermées du GUI"""
         try:
