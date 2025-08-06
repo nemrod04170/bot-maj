@@ -318,29 +318,18 @@ def run_backend_tests():
     print("🚀 Starting Cryptocurrency Trading Bot Backend Tests")
     print("=" * 60)
     
-    # Create test suite
-    suite = unittest.TestSuite()
-    
-    # Add test methods
-    test_methods = [
-        'test_config_manager_initialization',
-        'test_crypto_bot_engine_initialization', 
-        'test_gui_integration',
-        'test_trade_data_structure',
-        'test_portfolio_state_management',
-        'test_closed_trade_formatting'
-    ]
-    
-    for method in test_methods:
-        suite.addTest(TestCryptoTradingBot(method))
-    
-    # Run tests
-    runner = unittest.TextTestRunner(verbosity=0, stream=open(os.devnull, 'w'))
-    result = runner.run(suite)
-    
     # Manual test execution for better control
     test_instance = TestCryptoTradingBot()
     test_results = []
+    
+    test_methods = [
+        'test_config_manager_functionality',
+        'test_crypto_bot_engine_structure', 
+        'test_gui_structure',
+        'test_trade_data_structure',
+        'test_portfolio_state_management',
+        'test_closed_trade_formatting_structure'
+    ]
     
     for method in test_methods:
         test_instance.setUp()
