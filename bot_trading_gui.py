@@ -768,10 +768,10 @@ class ScalpingBotGUI:
             import json
             import os
             
-            if not os.path.exists('/app/bot_state.json'):
+            if not os.path.exists('bot_state.json'):
                 return
                 
-            with open('/app/bot_state.json', 'r') as f:
+            with open('bot_state.json', 'r') as f:
                 state = json.load(f)
             
             # Restaurer l'état
