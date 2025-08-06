@@ -2,33 +2,153 @@
 #  CONFIG BOT SCALPING PRO - OPTIMISÉ
 # ==========================
 
-order_size = 50                # Moins d'exposition par trade
-max_open_positions = 2         # Réduire pour limiter risque cumulé
+# CAPITAL MANAGEMENT
+# ==================
+order_size = 50                # Exposition par trade (USDT)
+max_open_positions = 2         # Nombre maximum de positions ouvertes
+INITIAL_BALANCE = 1000.0       # Balance initiale en simulation
+POSITION_SIZE_USDT = 50        # Taille de position en USDT
 
-stop_loss_percent = 0.5        # Stop loss serré
-trailing_start_percent = 0.8   # Activer trailing plus haut
-trailing_step_percent = 0.3    # Distance de suivi plus serrée
-timeout_seconds = 180          # 3 minutes max par trade
-take_profit_percent = 0.8      # Objectif rapide
+# SYSTÈME DE SÉCURITÉ
+# ===================
+stop_loss_percent = 0.5        # Stop loss serré (%)
+trailing_start_percent = 0.8   # Gain minimum pour activer le trailing stop (%)
+trailing_step_percent = 0.3    # Distance de suivi trailing stop (%)
+timeout_seconds = 180          # Durée max d'un trade (secondes)
+take_profit_percent = 0.8      # Objectif de profit rapide (%)
+TRAILING_STOP_ENABLED = True   # Activer le trailing stop
+TIMEOUT_EXIT_SECONDS = 180     # Timeout pour sortie automatique
 
-ema_fast = 8
-ema_slow = 20
-rsi_min = 28
-rsi_max = 72
+# INDICATEURS TECHNIQUES
+# ======================
+ema_fast = 8                   # EMA rapide (période)
+ema_slow = 20                  # EMA lente (période)  
+rsi_min = 28                   # RSI minimum (zone survente)
+rsi_max = 72                   # RSI maximum (zone surachat)
+RSI_PERIOD = 14                # Période de calcul du RSI
+EMA_FAST = 9                   # EMA rapide pour signaux
+EMA_SLOW = 21                  # EMA lente pour signaux
 
-pump_min_3min = 1.2
-pump_max_3min = 2.5
-min_volume_btc_eth = 70000000
-min_volume_altcoins = 12000000
-min_volume_microcaps = 2000000
-spread_max = 0.08
-orderbook_depth_min = 100
-signals_required = 3
+# CRITÈRES DE SCALPING
+# ====================
+pump_min_3min = 1.2            # Pump minimum sur 3 minutes (%)
+pump_max_3min = 2.5            # Pump maximum sur 3 minutes (%)
+min_volume_btc_eth = 70000000  # Volume minimum BTC/ETH (24h)
+min_volume_altcoins = 12000000 # Volume minimum altcoins (24h) 
+min_volume_microcaps = 2000000 # Volume minimum microcaps (24h)
+MIN_VOLUME_BTC_ETH = 70000000  # Volume minimum BTC/ETH (alternative)
+MIN_VOLUME_ALTCOINS = 12000000 # Volume minimum altcoins (alternative)
+MIN_VOLUME_MICROCAPS = 2000000 # Volume minimum microcaps (alternative)
+VOLUME_SPIKE_THRESHOLD = 130   # Seuil de spike de volume (%)
 
-filter_suffixes = USDT,BTC
-candle_body_ratio_min = 0.65
-candle_upper_wick_max = 0.25
+# FILTRES DE QUALITÉ
+# ==================
+spread_max = 0.08              # Spread maximum autorisé (%)
+orderbook_depth_min = 100      # Profondeur minimum du carnet d'ordres
+signals_required = 3           # Nombre minimum de signaux pour validation
+MAX_SPREAD_PERCENT = 0.08      # Spread maximum (alternative)
+MIN_ORDER_BOOK_DEPTH = 100     # Profondeur carnet minimum (alternative)
+MIN_REQUIRED_SIGNALS = 3       # Signaux requis minimum (alternative)
 
-max_daily_loss_percent = 3
-max_total_exposure = 1000
-simulate_trades = False
+# FILTRAGE DES PAIRES
+# ===================
+filter_suffixes = USDT,BTC     # Suffixes de paires autorisés
+PAIR_SUFFIXES = USDT,BTC,ETH   # Suffixes de paires (alternative)
+PAIR_SUFFIX_MODE = INCLUDE     # Mode de filtrage (INCLUDE/EXCLUDE)
+
+# ANALYSE DES CHANDELLES
+# ======================
+candle_body_ratio_min = 0.65   # Corps de bougie minimum (% du range)
+candle_upper_wick_max = 0.25   # Mèche supérieure maximum (% du range)
+
+# GESTION DES RISQUES
+# ===================
+max_daily_loss_percent = 3     # Perte journalière maximum (%)
+max_total_exposure = 1000      # Exposition totale maximum
+MAX_DAILY_LOSS = 0.03          # Perte journalière maximum (alternative)
+MAX_TOTAL_EXPOSURE = 1000      # Exposition totale maximum (alternative)
+RISK_REWARD_RATIO = 2.0        # Ratio risque/récompense
+
+# MODE DE FONCTIONNEMENT
+# ======================
+simulate_trades = False        # Mode simulation (True/False)
+SIMULATION_MODE = True         # Mode simulation (alternative)
+TESTNET_MODE = False          # Mode testnet Binance
+AUTO_START_BOT = True         # Démarrage automatique du bot
+
+# AUTO-SCAN CONFIGURATION
+# =======================
+AUTO_SCAN_ENABLED = True      # Activer l'auto-scan
+SCAN_INTERVAL_MINUTES = 1     # Intervalle de scan en minutes
+SCAN_CONTINUOUS = True        # Scan continu
+MAX_SCAN_RETRIES = 10         # Nombre maximum de tentatives
+MAX_CRYPTOS = 20              # Nombre maximum de cryptos à suivre
+
+# OBJECTIFS DE TRADING  
+# ====================
+DAILY_TARGET_PERCENT = 2.0    # Objectif journalier (%)
+MAX_TRADES_PER_DAY = 20       # Nombre maximum de trades par jour
+MIN_SUCCESS_RATE = 60         # Taux de succès minimum (%)
+
+# SLIPPAGE TRACKING
+# =================
+ENABLE_SLIPPAGE_TRACKING = True  # Activer le suivi du slippage
+MAX_ACCEPTABLE_SLIPPAGE = 0.1    # Slippage maximum acceptable (%)
+
+# FRAIS BINANCE
+# =============
+USE_BNB_DISCOUNT = True       # Utiliser le discount BNB
+BINANCE_VIP_LEVEL = 0         # Niveau VIP Binance
+
+# CONFIGURATION INTERFACE GRAPHIQUE
+# =================================
+max_charts = 6                # Nombre maximum de graphiques
+chart_width = 200             # Largeur des mini-graphiques
+chart_height = 120            # Hauteur des mini-graphiques  
+chart_history_length = 60     # Longueur historique prix (points)
+chart_line_width = 1.5        # Épaisseur ligne prix
+chart_bg_color = #2d2d2d      # Couleur arrière-plan graphiques
+chart_plot_bg_color = #1a1a1a # Couleur arrière-plan plots
+chart_line_color = #00ff88    # Couleur ligne prix
+chart_text_color = white      # Couleur texte
+chart_positive_color = #00ff88 # Couleur variations positives
+chart_negative_color = #ff4444 # Couleur variations négatives
+chart_neutral_color = #ffaa00  # Couleur neutre
+panel_bg_color = #1a1a1a      # Couleur arrière-plan panel
+panel_title_color = white     # Couleur titre panel
+chart_margin_percent = 0.1    # Marge graphiques (%)
+chart_stable_margin_low = 0.999  # Marge basse prix stable
+chart_stable_margin_high = 1.001 # Marge haute prix stable
+price_format_threshold_1 = 1     # Seuil formatage prix 1
+price_format_threshold_2 = 0.01  # Seuil formatage prix 2
+large_chart_width = 600       # Largeur graphique principal
+large_chart_height = 300      # Hauteur graphique principal
+large_chart_bg_color = #2d2d2d  # Couleur arrière-plan graphique principal
+large_chart_plot_bg_color = #1a1a1a # Couleur plots graphique principal
+large_chart_price_line_color = #00ff88 # Couleur ligne prix principal
+large_chart_volume_color = #666666     # Couleur volume principal
+large_chart_text_color = white        # Couleur texte principal
+large_chart_price_line_width = 2      # Épaisseur ligne prix principal
+large_chart_volume_alpha = 0.7        # Transparence volume principal
+
+# CONFIGURATION TESTS
+# ===================
+test_update_interval = 2      # Intervalle mise à jour tests (secondes)
+test_price_variance = 0.02    # Variance prix tests
+test_volume_min = 1000000     # Volume minimum tests
+test_volume_max = 10000000    # Volume maximum tests
+
+# TIMEFRAMES
+# ==========
+TIMEFRAME = 1h                # Timeframe principal
+CONFIRMATION_TIMEFRAME = 5m   # Timeframe de confirmation
+
+# CONFIGURATION EXCHANGE  
+# ======================
+EXCHANGE_NAME = binance       # Nom de l'exchange
+
+# LOGS ET INTERFACE
+# =================
+CHART_UPDATE_SECONDS = 1      # Fréquence mise à jour graphiques
+LOG_MAX_LINES = 100           # Nombre maximum de lignes de log
+THEME_DARK = True             # Thème sombre activé
