@@ -1740,6 +1740,9 @@ class CryptoTradingBot:
             # Calculer frais de sortie (même taux que l'entrée)
             exit_fees = gross_exit_value * trading_fees
             
+            # NOUVEAU: Ajouter les frais de sortie au total
+            self.total_fees += exit_fees
+            
             # Valeur nette après frais de sortie
             net_exit_value = gross_exit_value - exit_fees
             
