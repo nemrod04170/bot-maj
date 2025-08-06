@@ -1782,6 +1782,14 @@ class CryptoTradingBot:
     def _close_position_scalping(self, position: Dict, exit_price: float):
         """Ferme une position scalping avec calcul P&L incluant les frais"""
         try:
+            # S'assurer que exit_time est défini si pas encore fait
+            if 'exit_time' not in position:
+                position['exit_time'] = datetime.now()
+            
+            # S'assurer que exit_reason est défini avec une valeur par défaut
+            if 'exit_reason' not in position:
+                position['exit_reason'] = 'MANUAL_CLOSE'
+                
             entry_price = position['price']
             quantity = position['quantity']
             position_value = position['value_usdt']  # 200€ initial
