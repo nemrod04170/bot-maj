@@ -656,9 +656,9 @@ class ScalpingBotGUI:
             )
             
             if result:
-                # Utiliser les valeurs du config.txt
-                self.bot.simulated_balance = initial_balance
-                self.bot.balance = initial_balance
+                # Utiliser les valeurs du config.txt (conversion en nombres)
+                self.bot.simulated_balance = float(initial_balance)
+                self.bot.balance = float(initial_balance)
                 self.bot.open_positions = []
                 self.bot.total_trades = 0
                 self.bot.winning_trades = 0
