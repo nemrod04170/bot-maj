@@ -1072,6 +1072,7 @@ class CryptoTradingBot:
                 'total_pnl': self.total_pnl,
                 'total_trades': self.total_trades,
                 'winning_trades': self.winning_trades,
+                'total_fees': self.total_fees,  # NOUVEAU: Sauvegarder frais totaux
                 'last_updated': datetime.now().isoformat(),
                 'initial_balance': self.initial_balance,
                 'position_size_usdt': self.position_size_usdt
