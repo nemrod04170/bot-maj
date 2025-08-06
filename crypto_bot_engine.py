@@ -1227,7 +1227,17 @@ class CryptoTradingBot:
                     
                     price_change_percent = ((current_price - entry_price) / entry_price) * 100
                     
-                    # RÈGLE 1: STOP LOSS (Priorité absolue - inchangé)
+                    # RÈGLE 1: VENTE IMMÉDIATE sur CHUTE SIGNIFICATIVE (nouvelle règle prioritaire)
+                    immediate_exit_threshold = self.config_manager.get('IMMEDIATE_EXIT_THRESHOLD', -0.8)  # -0.8% par défaut
+                    if isinstance(immediate_exit_threshold, str):
+                        immediate_exit_threshold = float(immediate_exit_threshold)
+                    
+                    if price_change_percent <= immediate_exit_threshold:
+                        self.log(f"🚨 {symbol}: VENTE IMMÉDIATE - Chute significative ({price_change_percent:+.2f}%) !")
+                        self._close_position_with_reason(position, current_price, "IMMEDIATE_EXIT")
+                        return
+                    
+                    # RÈGLE 2: STOP LOSS traditionnel (si pas encore vendu)
                     if current_price <= stop_loss:
                         self.log(f"🛑 {symbol}: STOP LOSS déclenché à {current_price:.6f} (-{abs(price_change_percent):.2f}%)")
                         self._close_position_with_reason(position, current_price, "STOP_LOSS")
