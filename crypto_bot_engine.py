@@ -275,6 +275,7 @@ class CryptoTradingBot:
         self.total_trades = 0
         self.winning_trades = 0
         self.total_pnl = 0.0
+        self.total_fees = 0.0  # NOUVEAU: Tracking des frais totaux
         self.max_cryptos = config_manager.get('MAX_CRYPTOS', 20)
         self.scan_interval_minutes = config_manager.get('SCAN_INTERVAL_MINUTES', 1)
         
