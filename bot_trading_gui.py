@@ -1498,16 +1498,20 @@ class ScalpingBotGUI:
             # Formatage de la raison de fermeture avec emoji
             reason_icons = {
                 'TAKE_PROFIT': '🎯',
+                'TAKE_PROFIT_INTELLIGENT': '🎯',
                 'STOP_LOSS': '🛑',
-                'MOMENTUM': '📊',
+                'MOMENTUM_DECLINE': '📊',
                 'TIMEOUT': '⏱️',
                 'MANUAL': '👤',
                 'TRAILING_STOP': '📈',
-                'IMMEDIATE_EXIT': '🚨',     # Chute significative
-                'RAPID_EXIT': '⚡',         # Chute rapide
-                'STAGNATION_TIMEOUT': '💤', # Position stagnante
-                'NEGATIVE_TIMEOUT': '⬇️',   # Position négative trop longtemps
-                'ABSOLUTE_TIMEOUT': '⏰'    # Timeout absolu
+                'IMMEDIATE_EXIT': '🚨',           # Chute significative immédiate
+                'RAPID_EXIT': '⚡',              # Chute rapide dans les premières minutes
+                'EARLY_PROFIT_EXIT': '💰',       # Vente anticipée sur profit + momentum faible
+                'STRONG_PROFIT_EXIT': '🎉',      # Vente sur profit excellent
+                'TRAILING_STOP_PROFIT': '📉',    # Trailing stop sur profit
+                'STAGNATION_TIMEOUT': '💤',      # Position stagnante
+                'NEGATIVE_TIMEOUT': '⬇️',        # Position négative trop longtemps
+                'ABSOLUTE_TIMEOUT': '⏰'         # Timeout absolu
             }
             reason_icon = reason_icons.get(exit_reason, '❓')
             
