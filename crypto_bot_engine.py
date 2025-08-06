@@ -1182,7 +1182,7 @@ class CryptoTradingBot:
             self.log(f"❌ Erreur système surveillance {symbol}: {e}")
     
     def _monitor_position_simple(self, position: Dict):
-        """Surveille une position avec le NOUVEAU système simplifié : Stop Loss + Take Profit + Intelligence"""
+        """Surveillance INTELLIGENTE avec tracking momentum - Ne vend QUE quand nécessaire"""
         try:
             symbol = position['symbol']
             entry_price = position['entry_price']
@@ -1191,11 +1191,22 @@ class CryptoTradingBot:
             direction = position['direction']
             
             # Configuration surveillance intelligente
-            intelligent_monitoring = self.config_manager.get('INTELLIGENT_MONITORING', True)
-            momentum_threshold = self.config_manager.get('MOMENTUM_THRESHOLD', 0.3)
-            rsi_hold_threshold = self.config_manager.get('RSI_HOLD_THRESHOLD', 10)
+            intelligent_tracking = self.config_manager.get('INTELLIGENT_MOMENTUM_TRACKING', True)
+            momentum_check_interval = self.config_manager.get('MOMENTUM_CHECK_INTERVAL', 3)
+            stagnation_threshold = self.config_manager.get('MOMENTUM_STAGNATION_THRESHOLD', 0.05)
+            decline_threshold = self.config_manager.get('MOMENTUM_DECLINE_THRESHOLD', -0.1)
+            max_tp_extension = self.config_manager.get('MAX_TP_EXTENSION_PERCENT', 2.0)
+            min_samples = self.config_manager.get('MIN_MOMENTUM_SAMPLES', 5)
+            strong_momentum = self.config_manager.get('STRONG_MOMENTUM_THRESHOLD', 0.3)
+            weak_momentum = self.config_manager.get('WEAK_MOMENTUM_THRESHOLD', 0.1)
             
-            self.log(f"🎯 SURVEILLANCE SIMPLE: {symbol} | SL: {stop_loss:.6f} | TP: {take_profit:.6f}")
+            # Historique des prix pour calcul momentum
+            price_history = []
+            tp_reached_time = None
+            extended_tp = take_profit  # TP peut être étendu si momentum fort
+            
+            self.log(f"🧠 SURVEILLANCE INTELLIGENTE: {symbol}")
+            self.log(f"   🎯 TP initial: {take_profit:.6f} | Extension max: +{max_tp_extension}%")
             
             while position['status'] == 'open' and self.is_running:
                 try:
@@ -1204,46 +1215,98 @@ class CryptoTradingBot:
                         time.sleep(2)
                         continue
                     
-                    # Calculer performance
+                    # Ajouter prix à l'historique
+                    price_history.append({
+                        'price': current_price,
+                        'timestamp': datetime.now()
+                    })
+                    
+                    # Garder seulement les N derniers échantillons
+                    if len(price_history) > min_samples * 2:
+                        price_history = price_history[-min_samples * 2:]
+                    
                     price_change_percent = ((current_price - entry_price) / entry_price) * 100
                     
-                    # RÈGLE 1: STOP LOSS (Priorité absolue) - TOUJOURS LONG
+                    # RÈGLE 1: STOP LOSS (Priorité absolue - inchangé)
                     if current_price <= stop_loss:
                         self.log(f"🛑 {symbol}: STOP LOSS déclenché à {current_price:.6f} (-{abs(price_change_percent):.2f}%)")
                         self._close_position_with_reason(position, current_price, "STOP_LOSS")
                         return
                     
-                    # RÈGLE 2: TAKE PROFIT (Objectif atteint) - TOUJOURS LONG
+                    # RÈGLE 2: CALCUL MOMENTUM (si assez d'échantillons)
+                    momentum_percent = 0
+                    momentum_trend = "NEUTRE"
+                    
+                    if len(price_history) >= min_samples:
+                        # Calculer momentum sur les N derniers points
+                        recent_prices = [p['price'] for p in price_history[-min_samples:]]
+                        oldest_price = recent_prices[0]
+                        momentum_percent = ((current_price - oldest_price) / oldest_price) * 100
+                        
+                        # Déterminer la tendance
+                        if momentum_percent > strong_momentum:
+                            momentum_trend = "FORTE HAUSSE 🚀"
+                        elif momentum_percent > weak_momentum:
+                            momentum_trend = "HAUSSE 📈"
+                        elif momentum_percent > decline_threshold:
+                            momentum_trend = "STAGNATION 😐"
+                        else:
+                            momentum_trend = "BAISSE 📉"
+                    
+                    # RÈGLE 3: GESTION TAKE PROFIT INTELLIGENT
                     if current_price >= take_profit:
-                        self.log(f"🎉 {symbol}: TAKE PROFIT atteint à {current_price:.6f} (+{price_change_percent:.2f}%)")
-                        self._close_position_with_reason(position, current_price, "TAKE_PROFIT")
-                        return
+                        if tp_reached_time is None:
+                            tp_reached_time = datetime.now()
+                            self.log(f"🎯 {symbol}: Take Profit initial atteint ! Surveillance momentum activée")
+                        
+                        if intelligent_tracking and len(price_history) >= min_samples:
+                            # Si momentum encore très positif, étendre le TP
+                            if momentum_percent > strong_momentum and momentum_trend == "FORTE HAUSSE 🚀":
+                                # Calculer nouveau TP étendu
+                                extension_factor = min(1 + (max_tp_extension / 100), 1.05)  # Max +5%
+                                new_extended_tp = entry_price * (1 + (((take_profit / entry_price) - 1) * extension_factor))
+                                
+                                if new_extended_tp > extended_tp:
+                                    extended_tp = new_extended_tp
+                                    self.log(f"🚀 {symbol}: TP ÉTENDU à {extended_tp:.6f} (momentum: +{momentum_percent:.2f}%)")
+                            
+                            # Vendre si momentum faiblit ou devient négatif
+                            elif momentum_percent < stagnation_threshold:
+                                self.log(f"💰 {symbol}: VENTE - TP atteint + momentum faible ({momentum_trend})")
+                                self.log(f"   Prix: {current_price:.6f} | Momentum: {momentum_percent:+.2f}%")
+                                self._close_position_with_reason(position, current_price, "TAKE_PROFIT_INTELLIGENT")
+                                return
+                        else:
+                            # Mode classique si pas assez d'échantillons
+                            self.log(f"🎉 {symbol}: TAKE PROFIT classique atteint à {current_price:.6f}")
+                            self._close_position_with_reason(position, current_price, "TAKE_PROFIT")
+                            return
                     
-                    # RÈGLE 3: SURVEILLANCE INTELLIGENTE (si activée) - TOUJOURS LONG
-                    if intelligent_monitoring:
-                        # Si on est en profit mais pas encore au take profit (LONG uniquement)
-                        if current_price > entry_price:
-                            # TODO: Calculer momentum et RSI actuels
-                            # Pour l'instant, logique simple : si profit > 0.8%, surveiller de près
-                            if price_change_percent > 0.8:
-                                self.log(f"📈 {symbol}: En profit +{price_change_percent:.2f}% - Surveillance renforcée")
-                                time.sleep(1)  # Check plus fréquent
-                                continue
+                    # RÈGLE 4: VENTE SI MOMENTUM DEVIENT NÉGATIF (même sans atteindre TP)
+                    if intelligent_tracking and len(price_history) >= min_samples:
+                        if momentum_percent < decline_threshold and price_change_percent > 0.2:
+                            # On était en profit mais momentum devient négatif
+                            self.log(f"⚠️ {symbol}: VENTE préventive - Momentum négatif détecté")
+                            self.log(f"   Prix: {current_price:.6f} | Momentum: {momentum_percent:+.2f}% | Profit: {price_change_percent:+.2f}%")
+                            self._close_position_with_reason(position, current_price, "MOMENTUM_DECLINE")
+                            return
                     
-                    # RÈGLE 4: TIMEOUT (Sécurité)
+                    # RÈGLE 5: TIMEOUT DE SÉCURITÉ (plus long)
                     time_elapsed = (datetime.now() - position['entry_time']).total_seconds()
-                    timeout_seconds = self.config_manager.get('timeout_seconds', 300)
+                    max_timeout = self.config_manager.get('timeout_seconds', 600)  # 10 min au lieu de 3
                     
-                    if time_elapsed > timeout_seconds:
-                        self.log(f"⏰ {symbol}: TIMEOUT atteint ({time_elapsed:.0f}s) - Position fermée")
-                        self._close_position_with_reason(position, current_price, "TIMEOUT")
+                    if time_elapsed > max_timeout:
+                        self.log(f"⏰ {symbol}: TIMEOUT sécurité ({time_elapsed:.0f}s) - Fermeture forcée")
+                        self._close_position_with_reason(position, current_price, "TIMEOUT_SECURITY")
                         return
                     
-                    # Log périodique
-                    if int(time_elapsed) % 30 == 0:  # Toutes les 30s
-                        self.log(f"📊 {symbol}: {price_change_percent:+.2f}% | SL: {stop_loss:.6f} | TP: {take_profit:.6f}")
+                    # Log périodique avec momentum
+                    if int(time_elapsed) % 15 == 0:  # Toutes les 15s
+                        self.log(f"🧠 {symbol}: {price_change_percent:+.2f}% | Momentum: {momentum_trend} ({momentum_percent:+.2f}%)")
+                        if extended_tp > take_profit:
+                            self.log(f"   🎯 TP étendu: {extended_tp:.6f} (original: {take_profit:.6f})")
                     
-                    time.sleep(3)  # Check toutes les 3 secondes
+                    time.sleep(momentum_check_interval)  # Check toutes les 3 secondes
                     
                 except Exception as e:
                     self.log(f"❌ Erreur surveillance {symbol}: {e}")
