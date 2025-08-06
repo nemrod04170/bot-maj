@@ -1549,8 +1549,9 @@ class CryptoTradingBot:
             net_pnl = net_exit_value - net_invested  # P&L net après frais
             pnl_percent = (net_pnl / net_invested) * 100
             
-            # Total rendu au capital (valeur initiale + P&L net)
-            total_return = position_value + net_pnl
+            # CORRECTION: Total rendu = capital investi réel + P&L net
+            # On récupère ce qu'on a réellement investi + les gains/pertes
+            total_return = net_invested + net_pnl  # 49.95€ + P&L au lieu de 50€ + P&L
             
             # Mettre à jour la balance selon le mode
             if self.simulation_mode:
