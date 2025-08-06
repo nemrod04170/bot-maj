@@ -690,15 +690,18 @@ class ScalpingBotGUI:
                 self.trades_history_text.insert(1.0, "🔄 Historique réinitialisé - Aucun trade fermé\n")
                 self.trades_history_text.config(state='disabled')
                 
-                # FORCER LE RAFRAÎCHISSEMENT DE L'INTERFACE
-                self.update_positions_display()
-                self.update_balance_display()
+                # FORCER LE RAFRAÎCHISSEMENT COMPLET DE L'INTERFACE
+                self.refresh_all_displays()
                 
                 # LOG confirmation
                 self.bot.log("✅ RESET SIMULATION TERMINÉ - Toutes les positions supprimées")
                 
                 # Notifier le GUI que tout a changé
                 self.on_log_message("✅ SIMULATION RÉINITIALISÉE - Toutes positions fermées")
+                
+                # Forcer la mise à jour de la balance
+                if hasattr(self.bot, 'balance'):
+                    self.on_balance_update(self.bot.balance, 0)  # 0 positions ouvertes
                 
                 # Notifier balance
                 for callback in self.bot.callbacks.get('balance_update', []):
