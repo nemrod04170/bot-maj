@@ -1334,15 +1334,18 @@ class CryptoTradingBot:
                             self._close_position_with_reason(position, current_price, "EARLY_PROFIT_EXIT")
                             return
                     
-                    # === GESTION TAKE PROFIT TRADITIONNEL + EXTENSION ===
+                    # === GESTION TAKE PROFIT INTELLIGENT ET SOPHISTICATED ===
                     
                     if current_price >= take_profit:
                         if tp_reached_time is None:
                             tp_reached_time = datetime.now()
-                            self.log(f"🎯 {symbol}: Take Profit initial atteint ! Surveillance momentum activée")
+                            self.log(f"🎯 {symbol}: Take Profit initial atteint ! Surveillance intelligente activée")
                         
                         if intelligent_tracking and len(price_history) >= min_samples:
-                            # Extension du TP si momentum très fort
+                            
+                            # === LOGIQUE SOPHISTIQUÉE : EXTENSION ET SURVEILLANCE ===
+                            
+                            # Si momentum encore très fort → Étendre le TP
                             if momentum_percent > strong_momentum and momentum_trend == "FORTE HAUSSE 🚀":
                                 extension_factor = min(1 + (max_tp_extension / 100), 1.05)  # Max +5%
                                 new_extended_tp = entry_price * (1 + (((take_profit / entry_price) - 1) * extension_factor))
@@ -1350,17 +1353,62 @@ class CryptoTradingBot:
                                 if new_extended_tp > extended_tp:
                                     extended_tp = new_extended_tp
                                     self.log(f"🚀 {symbol}: TP ÉTENDU à {extended_tp:.6f} (momentum: +{momentum_percent:.2f}%)")
+                                
+                                # CONTINUER À SURVEILLER - Ne pas vendre tant que momentum fort
+                                self.log(f"🔍 {symbol}: Momentum très fort - Surveillance continue...")
                             
-                            # Vendre si momentum faiblit
-                            elif momentum_percent < stagnation_threshold:
-                                self.log(f"💰 {symbol}: VENTE TP + momentum faible ({momentum_trend})")
+                            # Si au-dessus du TP étendu ET momentum encore positif → Continuer à surveiller
+                            elif current_price > extended_tp and momentum_percent > weak_momentum:
+                                self.log(f"📈 {symbol}: Prix > TP étendu ({current_price:.6f} > {extended_tp:.6f}) - Momentum positif, on attend...")
+                            
+                            # === CRITÈRES DE VENTE APRÈS TP ===
+                            
+                            # VENTE 1: Momentum devient faible/stagnant
+                            elif momentum_percent <= stagnation_threshold:
+                                time_since_tp = (datetime.now() - tp_reached_time).total_seconds()
+                                self.log(f"💰 {symbol}: VENTE - TP dépassé + momentum faible")
+                                self.log(f"   Prix: {current_price:.6f} | Momentum: {momentum_percent:+.2f}% | Temps depuis TP: {time_since_tp:.0f}s")
                                 self._close_position_with_reason(position, current_price, "TAKE_PROFIT_INTELLIGENT")
                                 return
+                            
+                            # VENTE 2: Momentum devient négatif (baisse détectée)
+                            elif momentum_percent < decline_threshold:
+                                self.log(f"📉 {symbol}: VENTE - TP dépassé + momentum négatif détecté")
+                                self.log(f"   Prix: {current_price:.6f} | Momentum: {momentum_percent:+.2f}%")
+                                self._close_position_with_reason(position, current_price, "TP_MOMENTUM_DECLINE")
+                                return
+                            
+                            # VENTE 3: Prix redescend sous le TP original (protection)
+                            elif current_price < take_profit * 0.995:  # -0.5% sous TP original
+                                self.log(f"⚠️ {symbol}: VENTE - Prix redescend sous TP original")
+                                self.log(f"   Prix: {current_price:.6f} | TP original: {take_profit:.6f}")
+                                self._close_position_with_reason(position, current_price, "TP_PRICE_DECLINE")
+                                return
+                            
+                            # VENTE 4: Trop longtemps au-dessus du TP sans momentum fort
+                            else:
+                                time_since_tp = (datetime.now() - tp_reached_time).total_seconds()
+                                max_tp_hold_time = self.config_manager.get('MAX_TP_HOLD_TIME', 180)  # 3 min max
+                                if isinstance(max_tp_hold_time, str):
+                                    max_tp_hold_time = float(max_tp_hold_time)
+                                
+                                if time_since_tp > max_tp_hold_time and momentum_percent < strong_momentum:
+                                    self.log(f"⏰ {symbol}: VENTE - Trop longtemps au TP sans momentum fort")
+                                    self.log(f"   Temps: {time_since_tp:.0f}s | Momentum: {momentum_percent:+.2f}%")
+                                    self._close_position_with_reason(position, current_price, "TP_TIME_LIMIT")
+                                    return
+                            
                         else:
-                            # TP classique si pas assez d'échantillons
+                            # Mode classique si pas assez d'échantillons momentum
                             self.log(f"🎉 {symbol}: TAKE PROFIT classique à {current_price:.6f}")
                             self._close_position_with_reason(position, current_price, "TAKE_PROFIT")
                             return
+                    
+                    # Si on était au-dessus du TP mais prix redescend sous TP → Vente immédiate
+                    elif tp_reached_time is not None and current_price < take_profit:
+                        self.log(f"📉 {symbol}: VENTE - Prix redescend sous TP après l'avoir dépassé")
+                        self._close_position_with_reason(position, current_price, "TP_REVERSION")
+                        return
                     
                     # === VENTE PRÉVENTIVE SUR MOMENTUM NÉGATIF ===
                     
