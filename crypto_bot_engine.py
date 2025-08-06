@@ -1291,13 +1291,33 @@ class CryptoTradingBot:
                             self._close_position_with_reason(position, current_price, "MOMENTUM_DECLINE")
                             return
                     
-                    # RÈGLE 5: TIMEOUT DE SÉCURITÉ (plus long)
+                    # RÈGLE 5: TIMEOUT INTELLIGENT basé sur le mouvement du prix
                     time_elapsed = (datetime.now() - position['entry_time']).total_seconds()
-                    max_timeout = self.config_manager.get('timeout_seconds', 600)  # 10 min au lieu de 3
                     
-                    if time_elapsed > max_timeout:
-                        self.log(f"⏰ {symbol}: TIMEOUT sécurité ({time_elapsed:.0f}s) - Fermeture forcée")
-                        self._close_position_with_reason(position, current_price, "TIMEOUT_SECURITY")
+                    # Critères intelligents au lieu d'un timeout fixe
+                    price_change_abs = abs(price_change_percent)
+                    
+                    # CRITÈRE 1: Si ça bouge peu ET c'est long → Fermer (position stagnante)
+                    stagnation_timeout = self.config_manager.get('STAGNATION_TIMEOUT_SECONDS', 600)  # 10 min
+                    stagnation_threshold = self.config_manager.get('STAGNATION_PRICE_THRESHOLD', 0.1)  # 0.1%
+                    
+                    if time_elapsed > stagnation_timeout and price_change_abs < stagnation_threshold:
+                        self.log(f"⏰ {symbol}: Position STAGNANTE ({price_change_abs:.2f}% en {time_elapsed:.0f}s) - Fermeture")
+                        self._close_position_with_reason(position, current_price, "STAGNATION_TIMEOUT")
+                        return
+                    
+                    # CRITÈRE 2: Si ça bouge dans le mauvais sens ET c'est long → Fermer plus vite
+                    negative_timeout = self.config_manager.get('NEGATIVE_TIMEOUT_SECONDS', 300)  # 5 min
+                    if time_elapsed > negative_timeout and price_change_percent < -0.2:
+                        self.log(f"⏰ {symbol}: Position NÉGATIVE ({price_change_percent:+.2f}% en {time_elapsed:.0f}s) - Fermeture")
+                        self._close_position_with_reason(position, current_price, "NEGATIVE_TIMEOUT")
+                        return
+                    
+                    # CRITÈRE 3: Timeout de sécurité absolue (très long si ça bouge bien)
+                    max_absolute_timeout = self.config_manager.get('MAX_ABSOLUTE_TIMEOUT_SECONDS', 1800)  # 30 min max
+                    if time_elapsed > max_absolute_timeout:
+                        self.log(f"⏰ {symbol}: TIMEOUT ABSOLU ({time_elapsed:.0f}s) - Fermeture forcée")
+                        self._close_position_with_reason(position, current_price, "ABSOLUTE_TIMEOUT")
                         return
                     
                     # Log périodique avec momentum
