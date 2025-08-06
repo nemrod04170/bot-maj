@@ -1685,11 +1685,18 @@ class CryptoTradingBot:
                     existing_position = pos
                     break
             
-            # SCALPING: Si position existante, VENDRE automatiquement
+            # SCALPING: Si position existante, VENDRE automatiquement SEULEMENT si profitable
             if existing_position:
-                print(f"🔄 SCALPING {symbol}: Position existante trouvée - VENTE AUTOMATIQUE")
-                self._close_position_scalping(existing_position, current_price)
-                return
+                profit_threshold = self.config_manager.get('MIN_PROFIT_FOR_AUTO_SCALPING', 0.5)  # 0.5% minimum
+                price_change_percent = ((current_price - existing_position['price']) / existing_position['price']) * 100
+                
+                if price_change_percent >= profit_threshold:
+                    print(f"🔄 SCALPING {symbol}: Position profitable (+{price_change_percent:.2f}%) - VENTE AUTOMATIQUE")
+                    self._close_position_with_reason(existing_position, current_price, "AUTO_SCALPING_PROFIT")
+                    return
+                else:
+                    print(f"⏸️ SCALPING {symbol}: Position non-profitable ({price_change_percent:+.2f}%) - ATTENTE mouvement")
+                    return  # Ne pas créer nouvelle position, attendre
             
             # Créer l'ordre simulé avec SYSTÈME SIMPLIFIÉ : Stop Loss + Take Profit Dynamique
             trade_data = {
