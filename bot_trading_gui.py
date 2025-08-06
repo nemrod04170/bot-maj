@@ -323,20 +323,36 @@ class ScalpingBotGUI:
         )
         self.mode_label.pack(side='right')
         
-        self.positions_count_label = tk.Label(
-            right_frame, text="Positions: 0 ouvertes",
-            fg='white', bg='#2d2d2d',
-            font=('Arial', 10)
-        )
-        self.positions_count_label.pack(pady=2)
+        # === SECTION POSITIONS OUVERTES ===
+        positions_main_frame = tk.LabelFrame(right_frame, text="🔓 POSITIONS OUVERTES", 
+                                           font=('Arial', 10, 'bold'), fg='#ff8800', bg='#2d2d2d',
+                                           relief='groove', bd=2)
+        positions_main_frame.pack(fill='both', expand=True, padx=10, pady=5)
         
-        # Mode
-        self.mode_label = tk.Label(
-            right_frame, text="Mode: SIMULATION",
-            fg='#00aaff', bg='#2d2d2d',
-            font=('Arial', 10, 'bold')
+        # Zone de texte pour positions avec style amélioré
+        positions_canvas_frame = tk.Frame(positions_main_frame, bg='#2d2d2d')
+        positions_canvas_frame.pack(fill='both', expand=True, padx=5, pady=5)
+        
+        self.positions_text = tk.Text(
+            positions_canvas_frame,
+            height=8, width=50,
+            bg='#1a1a1a', fg='#cccccc',
+            insertbackground='white',
+            font=('Courier', 9),
+            relief='sunken', bd=2,
+            wrap=tk.WORD
         )
-        self.mode_label.pack(pady=5)
+        
+        # Scrollbar pour positions
+        positions_scrollbar = tk.Scrollbar(positions_canvas_frame, command=self.positions_text.yview)
+        self.positions_text.config(yscrollcommand=positions_scrollbar.set)
+        
+        self.positions_text.pack(side='left', fill='both', expand=True)
+        positions_scrollbar.pack(side='right', fill='y')
+        
+        # Message initial
+        self.positions_text.insert(1.0, "🚀 Démarrez le bot pour voir les positions\n\n")
+        self.positions_text.config(state='disabled')
         
         # Positions
         tk.Label(right_frame, text="📈 POSITIONS OUVERTES", font=('Arial', 10, 'bold'), 
