@@ -1320,9 +1320,9 @@ class CryptoTradingBot:
             use_bnb_discount = self.config_manager.get('USE_BNB_DISCOUNT', True)
             vip_level = self.config_manager.get('BINANCE_VIP_LEVEL', 0)
             
-            # Configuration des frais selon niveau VIP (depuis config.txt uniquement)
+            # Configuration des frais selon niveau VIP (depuis config.txt UNIQUEMENT)
             vip_4_maker_fee = self.config_manager.get('VIP_4_MAKER_FEE')
-            vip_4_taker_fee = self.config_manager.get('VIP_4_TAKER_FEE')
+            vip_4_taker_fee = self.config_manager.get('VIP_4_TAKER_FEE')  
             base_maker_fee = self.config_manager.get('BASE_MAKER_FEE')
             base_taker_fee = self.config_manager.get('BASE_TAKER_FEE')
             bnb_discount_rate = self.config_manager.get('BNB_DISCOUNT_RATE')
@@ -1333,13 +1333,13 @@ class CryptoTradingBot:
                 base_taker_fee = vip_4_taker_fee
                 use_maker_strategy = True  # Avantage à être maker
             else:
-                # VIP 0-3 : Frais identiques avec BNB
+                # VIP 0-3 : Frais identiques avec BNB  
                 use_maker_strategy = False  # Pas d'avantage avec BNB
             
             # Appliquer discount BNB si activé
-            if use_bnb_discount:
-                maker_fee = base_maker_fee * bnb_discount_rate if base_maker_fee and bnb_discount_rate else 0.00075
-                taker_fee = base_taker_fee * bnb_discount_rate if base_taker_fee and bnb_discount_rate else 0.00075
+            if use_bnb_discount and bnb_discount_rate:
+                maker_fee = base_maker_fee * bnb_discount_rate if base_maker_fee else 0.00075
+                taker_fee = base_taker_fee * bnb_discount_rate if base_taker_fee else 0.00075
                 fee_currency = "BNB"
                 # VIP 0 + BNB : maker = taker = 0.075%, donc pas besoin stratégie maker
                 if vip_level < 4:
