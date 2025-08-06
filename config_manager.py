@@ -197,7 +197,7 @@ class ConfigManager:
         return value
     
     def get(self, key: str, default=None):
-        """Récupère une valeur UNIQUEMENT depuis config.txt - AUCUNE valeur par défaut"""
+        """Récupère une valeur UNIQUEMENT depuis config.txt"""
         return self.config.get(key, default)
     
     def set(self, key: str, value: Any):
