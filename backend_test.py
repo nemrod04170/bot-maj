@@ -3,10 +3,10 @@
 Backend Testing Suite for Cryptocurrency Trading Bot
 Tests core functionality, configuration management, and data structures
 Focus on testing the corrected cryptocurrency trading bot functionality:
-1. Fixed "N/A" Issue - verify closed trades have proper exit_reason and exit_time
-2. Smart Scalping Logic - verify MIN_PROFIT_FOR_AUTO_SCALPING=0.5% prevents premature selling
-3. Trade Duration Calculation - verify durations are calculated correctly
-4. Position Closing - test that all position closing methods set exit_reason and exit_time
+1. TRADING STRATEGY FIX - verify bot buys when prices are RISING (+1%) instead of falling (-1%)
+2. P&L CALCULATION FIX - test corrected P&L total calculation with realized + unrealized P&L
+3. Signal Generation Logic - verify BUY signals on positive momentum (+1% change_24h)
+4. Portfolio P&L Accuracy - verify GUI P&L calculation uses actual trade results
 """
 
 import sys
