@@ -1387,20 +1387,53 @@ class ScalpingBotGUI:
         self.root.after(0, update_gui)
     
     def add_closed_trade_to_history(self, trade_data):
-        """Ajoute un trade fermé à l'historique avec P&L et couleurs"""
+        """Ajoute un trade fermé à l'historique avec affichage détaillé sur 2 lignes"""
         try:
+            # Extraction des données de base
             symbol = trade_data['symbol']
             entry_price = trade_data['price']
             exit_price = trade_data.get('exit_price', entry_price)
             net_pnl = trade_data.get('net_pnl', 0)
             pnl_percent = trade_data.get('pnl_percent', 0)
-            timestamp = trade_data['timestamp'].strftime('%H:%M:%S')
             total_fees = trade_data.get('total_fees', 0)
+            
+            # Gestion des timestamps (string ou datetime)
+            timestamp = trade_data.get('timestamp', '')
+            if isinstance(timestamp, str):
+                try:
+                    from datetime import datetime
+                    timestamp_dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                    timestamp_str = timestamp_dt.strftime('%d/%m %H:%M:%S')
+                except:
+                    timestamp_str = timestamp[:16] if len(timestamp) > 16 else timestamp
+            else:
+                timestamp_str = timestamp.strftime('%d/%m %H:%M:%S') if timestamp else "N/A"
+            
+            # Calcul de la durée
+            duration_str = "N/A"
+            try:
+                entry_time = trade_data.get('entry_time', trade_data.get('timestamp'))
+                exit_time = trade_data.get('exit_time', trade_data.get('closed_at'))
+                if entry_time and exit_time:
+                    if isinstance(entry_time, str):
+                        entry_dt = datetime.fromisoformat(entry_time.replace('Z', '+00:00'))
+                    else:
+                        entry_dt = entry_time
+                    if isinstance(exit_time, str):
+                        exit_dt = datetime.fromisoformat(exit_time.replace('Z', '+00:00'))
+                    else:
+                        exit_dt = exit_time
+                    duration = exit_dt - entry_dt
+                    minutes = int(duration.total_seconds() // 60)
+                    seconds = int(duration.total_seconds() % 60)
+                    duration_str = f"{minutes}m{seconds:02d}s"
+            except Exception as e:
+                duration_str = "N/A"
             
             # Ajouter à la liste
             self.closed_trades.append(trade_data)
             
-            # Formatage prix
+            # Formatage des prix avec précision adaptative
             if entry_price > 1:
                 entry_str = f"${entry_price:.4f}"
                 exit_str = f"${exit_price:.4f}"
@@ -1414,20 +1447,60 @@ class ScalpingBotGUI:
                 entry_str = f"${entry_price:.10f}"
                 exit_str = f"${exit_price:.10f}"
             
-            # Couleur selon P&L (TOUJOURS cohérente)
+            # Couleurs et icônes selon P&L
             if net_pnl > 0:
-                color = '#00aa44'  # Vert pour positif
-                arrow = '✅'
+                main_color = '#00cc55'  # Vert vif pour les gains
+                pnl_icon = '💚'
+                perf_icon = '📈'
                 tag_name = "profit"
             else:
-                color = '#ff4444'  # Rouge pour négatif
-                arrow = '❌'
+                main_color = '#ff3366'  # Rouge vif pour les pertes
+                pnl_icon = '💔'
+                perf_icon = '📉'
                 tag_name = "loss"
             
-            # Ligne d'historique avec PLUS-VALUE TOTALE claire
-            trade_line = f"[{timestamp}] {arrow} {symbol:<12} {entry_str:<12} → {exit_str:<12} P&L: {net_pnl:+.2f}€ ({pnl_percent:+.1f}%)\n"
+            # Données supplémentaires avec valeurs par défaut
+            exit_reason = trade_data.get('exit_reason', 'N/A')
+            momentum = trade_data.get('change_24h', 0)
+            initial_tp = trade_data.get('take_profit', 0)
+            dynamic_tp_percent = trade_data.get('dynamic_tp_percent', 0)
             
-            # Ajouter au début de l'historique
+            # Formatage du momentum avec couleur
+            if momentum > 0:
+                momentum_str = f"+{momentum:.1f}%"
+                momentum_icon = "🚀"
+            elif momentum < 0:
+                momentum_str = f"{momentum:.1f}%"
+                momentum_icon = "📊"
+            else:
+                momentum_str = "0.0%"
+                momentum_icon = "➖"
+            
+            # Formatage de la raison de fermeture avec emoji
+            reason_icons = {
+                'TAKE_PROFIT': '🎯',
+                'STOP_LOSS': '🛑',
+                'MOMENTUM': '📊',
+                'TIMEOUT': '⏱️',
+                'MANUAL': '👤',
+                'TRAILING_STOP': '📈'
+            }
+            reason_icon = reason_icons.get(exit_reason, '❓')
+            
+            # LIGNE 1: Informations principales
+            line1 = f"[{timestamp_str}] {pnl_icon} {symbol:<10} {entry_str} → {exit_str} {perf_icon} {net_pnl:+.2f}€ ({pnl_percent:+.1f}%) ⏱️{duration_str}\n"
+            
+            # LIGNE 2: Détails techniques (avec indentation pour clarté)
+            tp_info = f"TP: {initial_tp:.4f}" if initial_tp > 0 else "TP: N/A"
+            if dynamic_tp_percent > 0:
+                tp_info += f"→{dynamic_tp_percent:.1f}%"
+            
+            line2 = f"    └─ {reason_icon} {exit_reason} • {momentum_icon} Momentum: {momentum_str} • 💰 Frais: {total_fees:.2f}€ • {tp_info}\n"
+            
+            # Combinaison des deux lignes
+            trade_lines = line1 + line2
+            
+            # Insertion dans l'interface
             self.trades_history_text.config(state='normal')
             current_text = self.trades_history_text.get(1.0, tk.END)
             self.trades_history_text.delete(1.0, tk.END)
@@ -1436,26 +1509,34 @@ class ScalpingBotGUI:
             if "Aucun trade fermé" in current_text:
                 current_text = ""
             
-            # Insérer la nouvelle ligne
-            self.trades_history_text.insert(1.0, trade_line)
+            # Insérer les nouvelles lignes au début
+            self.trades_history_text.insert(1.0, trade_lines)
             self.trades_history_text.insert(tk.END, current_text)
             
-            # CORRECTION: Colorier TOUTE la ligne, pas seulement la première
-            line_start = "1.0"
-            line_end = "1.0 lineend"
+            # COLORATION AVANCÉE: Colorier les deux lignes avec nuances
             
-            # Créer un tag unique pour cette ligne
-            unique_tag = f"{tag_name}_{len(self.closed_trades)}"
-            self.trades_history_text.tag_add(unique_tag, line_start, line_end)
-            self.trades_history_text.tag_config(unique_tag, foreground=color)
+            # Ligne 1 - Couleur principale pour P&L
+            line1_start = "1.0"
+            line1_end = "1.0 lineend"
+            unique_tag_line1 = f"{tag_name}_main_{len(self.closed_trades)}"
+            self.trades_history_text.tag_add(unique_tag_line1, line1_start, line1_end)
+            self.trades_history_text.tag_config(unique_tag_line1, foreground=main_color, font=("Consolas", 9, "bold"))
             
-            # Configurer les tags génériques aussi
-            self.trades_history_text.tag_config("profit", foreground='#00aa44')
-            self.trades_history_text.tag_config("loss", foreground='#ff4444')
+            # Ligne 2 - Couleur plus claire pour les détails
+            line2_start = "2.0"
+            line2_end = "2.0 lineend"
+            detail_color = '#009944' if net_pnl > 0 else '#cc2244'
+            unique_tag_line2 = f"{tag_name}_detail_{len(self.closed_trades)}"
+            self.trades_history_text.tag_add(unique_tag_line2, line2_start, line2_end)
+            self.trades_history_text.tag_config(unique_tag_line2, foreground=detail_color, font=("Consolas", 8))
             
-            # Limiter à 50 trades max
+            # Configuration des tags génériques
+            self.trades_history_text.tag_config("profit", foreground='#00cc55', font=("Consolas", 9, "bold"))
+            self.trades_history_text.tag_config("loss", foreground='#ff3366', font=("Consolas", 9, "bold"))
+            
+            # Limiter à 25 trades max (50 lignes) pour performance
             lines = self.trades_history_text.get(1.0, tk.END).split('\n')
-            if len(lines) > 50:
+            if len(lines) > 50:  # 25 trades * 2 lignes
                 truncated = '\n'.join(lines[:50])
                 self.trades_history_text.delete(1.0, tk.END)
                 self.trades_history_text.insert(1.0, truncated)
@@ -1465,8 +1546,12 @@ class ScalpingBotGUI:
             
             self.trades_history_text.config(state='disabled')
             
+            print(f"✅ Trade ajouté à l'historique: {symbol} P&L: {net_pnl:+.2f}€")
+            
         except Exception as e:
-            print(f"❌ Erreur ajout trade historique: {e}")
+            print(f"❌ Erreur ajout trade historique détaillé: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _reapply_trade_colors(self):
         """Réapplique les couleurs à toutes les lignes de trades"""
