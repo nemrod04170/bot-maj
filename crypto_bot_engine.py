@@ -1603,6 +1603,9 @@ class CryptoTradingBot:
             net_position_size = position_size_usdt - entry_fees  # Capital réel investi
             quantity = net_position_size / entry_price  # Quantité ajustée aux frais
             
+            # NOUVEAU: Ajouter les frais d'entrée au total
+            self.total_fees += entry_fees
+            
             # Calculer stop loss avec prix maker
             # (déjà calculé plus haut avec entry_price)
             
