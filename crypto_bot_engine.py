@@ -1170,6 +1170,89 @@ class CryptoTradingBot:
         except Exception as e:
             self.log(f"❌ Erreur système surveillance {symbol}: {e}")
     
+    def _monitor_position_simple(self, position: Dict):
+        """Surveille une position avec le NOUVEAU système simplifié : Stop Loss + Take Profit + Intelligence"""
+        try:
+            symbol = position['symbol']
+            entry_price = position['entry_price']
+            stop_loss = position['stop_loss']
+            take_profit = position['take_profit']
+            direction = position['direction']
+            
+            # Configuration surveillance intelligente
+            intelligent_monitoring = self.config_manager.get('INTELLIGENT_MONITORING', True)
+            momentum_threshold = self.config_manager.get('MOMENTUM_THRESHOLD', 0.3)
+            rsi_hold_threshold = self.config_manager.get('RSI_HOLD_THRESHOLD', 10)
+            
+            self.log(f"🎯 SURVEILLANCE SIMPLE: {symbol} | SL: {stop_loss:.6f} | TP: {take_profit:.6f}")
+            
+            while position['status'] == 'open' and self.is_running:
+                try:
+                    current_price = self._get_current_price(symbol)
+                    if current_price is None:
+                        time.sleep(2)
+                        continue
+                    
+                    # Calculer performance
+                    price_change_percent = ((current_price - entry_price) / entry_price) * 100
+                    
+                    # RÈGLE 1: STOP LOSS (Priorité absolue)
+                    if direction == 'LONG' and current_price <= stop_loss:
+                        self.log(f"🛑 {symbol}: STOP LOSS déclenché à {current_price:.6f} (-{abs(price_change_percent):.2f}%)")
+                        self._close_position_with_reason(position, current_price, "STOP_LOSS")
+                        return
+                    elif direction == 'SHORT' and current_price >= stop_loss:
+                        self.log(f"🛑 {symbol}: STOP LOSS déclenché à {current_price:.6f} (+{abs(price_change_percent):.2f}%)")
+                        self._close_position_with_reason(position, current_price, "STOP_LOSS")
+                        return
+                    
+                    # RÈGLE 2: TAKE PROFIT (Objectif atteint)
+                    if direction == 'LONG' and current_price >= take_profit:
+                        self.log(f"🎉 {symbol}: TAKE PROFIT atteint à {current_price:.6f} (+{price_change_percent:.2f}%)")
+                        self._close_position_with_reason(position, current_price, "TAKE_PROFIT")
+                        return
+                    elif direction == 'SHORT' and current_price <= take_profit:
+                        self.log(f"🎉 {symbol}: TAKE PROFIT atteint à {current_price:.6f} (-{abs(price_change_percent):.2f}%)")
+                        self._close_position_with_reason(position, current_price, "TAKE_PROFIT")
+                        return
+                    
+                    # RÈGLE 3: SURVEILLANCE INTELLIGENTE (si activée)
+                    if intelligent_monitoring:
+                        # Si on est en profit mais pas encore au take profit
+                        if ((direction == 'LONG' and current_price > entry_price) or 
+                            (direction == 'SHORT' and current_price < entry_price)):
+                            
+                            # TODO: Calculer momentum et RSI actuels
+                            # Pour l'instant, logique simple : si profit > 0.8%, surveiller de près
+                            if abs(price_change_percent) > 0.8:
+                                # Momentum positif → attendre encore un peu
+                                if price_change_percent > 0:
+                                    self.log(f"📈 {symbol}: En profit +{price_change_percent:.2f}% - Surveillance renforcée")
+                                    time.sleep(1)  # Check plus fréquent
+                                    continue
+                    
+                    # RÈGLE 4: TIMEOUT (Sécurité)
+                    time_elapsed = (datetime.now() - position['entry_time']).total_seconds()
+                    timeout_seconds = self.config_manager.get('timeout_seconds', 300)
+                    
+                    if time_elapsed > timeout_seconds:
+                        self.log(f"⏰ {symbol}: TIMEOUT atteint ({time_elapsed:.0f}s) - Position fermée")
+                        self._close_position_with_reason(position, current_price, "TIMEOUT")
+                        return
+                    
+                    # Log périodique
+                    if int(time_elapsed) % 30 == 0:  # Toutes les 30s
+                        self.log(f"📊 {symbol}: {price_change_percent:+.2f}% | SL: {stop_loss:.6f} | TP: {take_profit:.6f}")
+                    
+                    time.sleep(3)  # Check toutes les 3 secondes
+                    
+                except Exception as e:
+                    self.log(f"❌ Erreur surveillance {symbol}: {e}")
+                    time.sleep(5)
+                    
+        except Exception as e:
+            self.log(f"❌ Erreur critique surveillance {symbol}: {e}")
+    
     def _get_current_price(self, symbol: str) -> Optional[float]:
         """Obtient le prix actuel d'un symbole"""
         try:
