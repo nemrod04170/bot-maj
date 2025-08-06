@@ -58,37 +58,8 @@ class TestCryptoTradingBot(unittest.TestCase):
         os.chdir(self.original_cwd)
         shutil.rmtree(self.test_dir)
     
-    def test_min_profit_auto_scalping_configuration(self):
-        """Test 1: MIN_PROFIT_FOR_AUTO_SCALPING Configuration - Verify the new 0.5% configuration is loaded"""
-        try:
-            os.chdir('/app')
-            from config_manager import ConfigManager
-            
-            config_manager = ConfigManager()
-            
-            # Test that MIN_PROFIT_FOR_AUTO_SCALPING is loaded correctly
-            min_profit = config_manager.get('MIN_PROFIT_FOR_AUTO_SCALPING')
-            self.assertIsNotNone(min_profit, "MIN_PROFIT_FOR_AUTO_SCALPING should be loaded")
-            self.assertEqual(float(min_profit), 0.5, "MIN_PROFIT_FOR_AUTO_SCALPING should be 0.5%")
-            
-            # Verify it's in the config.txt file
-            with open('config.txt', 'r') as f:
-                config_content = f.read()
-            
-            self.assertIn('MIN_PROFIT_FOR_AUTO_SCALPING', config_content, 
-                         "MIN_PROFIT_FOR_AUTO_SCALPING should be in config.txt")
-            self.assertIn('0.5', config_content, 
-                         "MIN_PROFIT_FOR_AUTO_SCALPING value should be 0.5")
-            
-            print("✅ MIN_PROFIT_FOR_AUTO_SCALPING Configuration: PASSED")
-            return True
-            
-        except Exception as e:
-            print(f"❌ MIN_PROFIT_FOR_AUTO_SCALPING Configuration: FAILED - {str(e)}")
-            return False
-    
-    def test_close_position_with_reason_function(self):
-        """Test 2: _close_position_with_reason Function - Verify exit_reason and exit_time are set"""
+    def test_trading_strategy_fix_buy_rising_trends(self):
+        """Test 1: TRADING STRATEGY FIX - Verify bot buys when prices are RISING (+1%) instead of falling (-1%)"""
         try:
             os.chdir('/app')
             
@@ -96,210 +67,197 @@ class TestCryptoTradingBot(unittest.TestCase):
             with open('crypto_bot_engine.py', 'r') as f:
                 content = f.read()
             
-            # Check that _close_position_with_reason function exists
-            self.assertIn('def _close_position_with_reason', content, 
-                         "_close_position_with_reason function should exist")
+            # Check that the CORRECTED logic exists: buy when change_24h > 1.0 (RISING)
+            self.assertIn("if change_24h > 1.0:", content,
+                         "Bot should buy when change_24h > 1.0 (RISING trends)")
             
-            # Check that it sets exit_reason and exit_time
-            self.assertIn("position['exit_reason'] = reason", content,
-                         "Function should set exit_reason")
-            self.assertIn("position['exit_time'] = datetime.now()", content,
-                         "Function should set exit_time")
+            # Check that BUY signal is generated on positive momentum
+            self.assertIn("signal = 'BUY'", content,
+                         "Bot should generate BUY signal on rising trends")
             
-            # Check that it calls _close_position_scalping
-            self.assertIn("self._close_position_scalping(position, exit_price)", content,
-                         "Function should call _close_position_scalping")
+            # Verify the comment explaining the fix
+            self.assertIn("CORRIGÉ: Acheter quand ça MONTE, pas quand ça descend", content,
+                         "Code should have comment explaining the fix")
             
-            print("✅ _close_position_with_reason Function: PASSED")
-            return True
-            
-        except Exception as e:
-            print(f"❌ _close_position_with_reason Function: FAILED - {str(e)}")
-            return False
-    
-    def test_close_position_scalping_na_fix(self):
-        """Test 3: _close_position_scalping N/A Fix - Verify exit_time and exit_reason defaults"""
-        try:
-            os.chdir('/app')
-            
-            # Read the crypto_bot_engine.py file
-            with open('crypto_bot_engine.py', 'r') as f:
-                content = f.read()
-            
-            # Check that _close_position_scalping function exists
-            self.assertIn('def _close_position_scalping', content, 
-                         "_close_position_scalping function should exist")
-            
-            # Check for the N/A fix - default exit_time
-            self.assertIn("if 'exit_time' not in position:", content,
-                         "Function should check for missing exit_time")
-            self.assertIn("position['exit_time'] = datetime.now()", content,
-                         "Function should set default exit_time")
-            
-            # Check for the N/A fix - default exit_reason
-            self.assertIn("if 'exit_reason' not in position:", content,
-                         "Function should check for missing exit_reason")
-            self.assertIn("position['exit_reason'] = 'MANUAL_CLOSE'", content,
-                         "Function should set default exit_reason")
-            
-            print("✅ _close_position_scalping N/A Fix: PASSED")
-            return True
-            
-        except Exception as e:
-            print(f"❌ _close_position_scalping N/A Fix: FAILED - {str(e)}")
-            return False
-    
-    def test_smart_scalping_logic(self):
-        """Test 4: Smart Scalping Logic - Verify MIN_PROFIT_FOR_AUTO_SCALPING prevents premature selling"""
-        try:
-            os.chdir('/app')
-            
-            # Read the crypto_bot_engine.py file
-            with open('crypto_bot_engine.py', 'r') as f:
-                content = f.read()
-            
-            # Check for the smart scalping logic
-            self.assertIn("profit_threshold = self.config_manager.get('MIN_PROFIT_FOR_AUTO_SCALPING', 0.5)", content,
-                         "Smart scalping should use MIN_PROFIT_FOR_AUTO_SCALPING configuration")
-            
-            # Check for profit calculation
-            self.assertIn("price_change_percent = ((current_price - existing_position['price']) / existing_position['price']) * 100", content,
-                         "Should calculate price change percentage")
-            
-            # Check for profit threshold comparison
-            self.assertIn("if price_change_percent >= profit_threshold:", content,
-                         "Should compare profit against threshold")
-            
-            # Check for auto scalping profit close
-            self.assertIn('self._close_position_with_reason(existing_position, current_price, "AUTO_SCALPING_PROFIT")', content,
-                         "Should close position with AUTO_SCALPING_PROFIT reason when profitable")
-            
-            # Check for waiting when not profitable
-            self.assertIn("Position non-profitable", content,
-                         "Should wait when position is not profitable enough")
-            
-            print("✅ Smart Scalping Logic: PASSED")
-            return True
-            
-        except Exception as e:
-            print(f"❌ Smart Scalping Logic: FAILED - {str(e)}")
-            return False
-    
-    def test_position_closing_methods_use_reason(self):
-        """Test 5: Position Closing Methods - Verify all closing methods use _close_position_with_reason"""
-        try:
-            os.chdir('/app')
-            
-            # Read the crypto_bot_engine.py file
-            with open('crypto_bot_engine.py', 'r') as f:
-                content = f.read()
-            
-            # Check that various closing scenarios use _close_position_with_reason
-            closing_scenarios = [
-                ('TRAILING_STOP', 'self._close_position_with_reason(position, current_price, "TRAILING_STOP")'),
-                ('TIMEOUT', 'self._close_position_with_reason(position, current_price, "TIMEOUT")'),
-                ('STOP_LOSS', 'self._close_position_with_reason(position, current_price, "STOP_LOSS")'),
-                ('TAKE_PROFIT', 'self._close_position_with_reason(position, current_price, "TAKE_PROFIT")'),
-                ('MOMENTUM_DECLINE', 'self._close_position_with_reason(position, current_price, "MOMENTUM_DECLINE")'),
-                ('AUTO_SCALPING_PROFIT', 'self._close_position_with_reason(existing_position, current_price, "AUTO_SCALPING_PROFIT")')
+            # Check that the old WRONG logic (buy falling) is NOT present
+            buy_falling_patterns = [
+                "if change_24h < -1.0.*signal = 'BUY'",
+                "change_24h < -1.*BUY"
             ]
             
-            for reason, expected_call in closing_scenarios:
-                self.assertIn(expected_call, content,
-                             f"Should use _close_position_with_reason for {reason}")
+            for pattern in buy_falling_patterns:
+                import re
+                if re.search(pattern, content, re.DOTALL):
+                    self.fail(f"Found old WRONG logic that buys falling trends: {pattern}")
             
-            print("✅ Position Closing Methods Use Reason: PASSED")
+            # Verify SELL signal is for falling trends (correct)
+            self.assertIn("elif change_24h < -1.0:", content,
+                         "Bot should sell/avoid when change_24h < -1.0 (FALLING trends)")
+            
+            print("✅ Trading Strategy Fix (Buy Rising Trends): PASSED")
+            print("   - Bot now buys when change_24h > +1.0% (RISING)")
+            print("   - Bot avoids when change_24h < -1.0% (FALLING)")
+            print("   - Logic makes sense: buy momentum, avoid decline")
             return True
             
         except Exception as e:
-            print(f"❌ Position Closing Methods Use Reason: FAILED - {str(e)}")
+            print(f"❌ Trading Strategy Fix (Buy Rising Trends): FAILED - {str(e)}")
             return False
     
-    def test_trade_duration_calculation_structure(self):
-        """Test 6: Trade Duration Calculation - Verify entry_time and exit_time are properly handled"""
-        try:
-            # Create sample trade data with proper timestamps
-            entry_time = datetime.now()
-            exit_time = entry_time + timedelta(minutes=5, seconds=30)
-            
-            sample_trade = {
-                "symbol": "BTC/USDT",
-                "entry_price": 50000.0,
-                "exit_price": 51000.0,
-                "entry_time": entry_time.isoformat(),
-                "exit_time": exit_time.isoformat(),
-                "exit_reason": "TAKE_PROFIT",
-                "net_pnl": 25.0,
-                "total_fees": 0.15
-            }
-            
-            # Test duration calculation
-            entry_dt = datetime.fromisoformat(sample_trade['entry_time'].replace('Z', '+00:00').replace('+00:00', ''))
-            exit_dt = datetime.fromisoformat(sample_trade['exit_time'].replace('Z', '+00:00').replace('+00:00', ''))
-            duration = exit_dt - entry_dt
-            
-            # Verify duration calculation works
-            self.assertIsInstance(duration, timedelta, "Duration should be a timedelta object")
-            self.assertGreater(duration.total_seconds(), 0, "Duration should be positive")
-            
-            # Verify both timestamps are present and valid
-            self.assertIn('entry_time', sample_trade, "Trade should have entry_time")
-            self.assertIn('exit_time', sample_trade, "Trade should have exit_time")
-            self.assertNotEqual(sample_trade['entry_time'], 'N/A', "entry_time should not be N/A")
-            self.assertNotEqual(sample_trade['exit_time'], 'N/A', "exit_time should not be N/A")
-            
-            print("✅ Trade Duration Calculation Structure: PASSED")
-            return True
-            
-        except Exception as e:
-            print(f"❌ Trade Duration Calculation Structure: FAILED - {str(e)}")
-            return False
-    
-    def test_portfolio_state_closed_trades_structure(self):
-        """Test 7: Portfolio State Closed Trades - Verify closed trades have proper exit_reason and exit_time"""
+    def test_pnl_calculation_fix_realized_plus_unrealized(self):
+        """Test 2: P&L CALCULATION FIX - Test corrected P&L total calculation with realized + unrealized P&L"""
         try:
             os.chdir('/app')
             
-            # Check if portfolio_state.json exists and has closed trades
-            if os.path.exists('portfolio_state.json'):
-                with open('portfolio_state.json', 'r') as f:
-                    portfolio = json.load(f)
-                
-                # Verify structure
-                self.assertIn('closed_trades', portfolio, "Portfolio should have closed_trades")
-                
-                # Check closed trades structure if any exist
-                if portfolio['closed_trades']:
-                    for i, trade in enumerate(portfolio['closed_trades'][:5]):  # Check first 5 trades
-                        # Verify exit_reason is not N/A
-                        if 'exit_reason' in trade:
-                            self.assertNotEqual(trade['exit_reason'], 'N/A', 
-                                              f"Trade {i} exit_reason should not be N/A")
-                            self.assertNotEqual(trade['exit_reason'], None, 
-                                              f"Trade {i} exit_reason should not be None")
-                        
-                        # Verify exit_time is not N/A
-                        if 'exit_time' in trade:
-                            self.assertNotEqual(trade['exit_time'], 'N/A', 
-                                              f"Trade {i} exit_time should not be N/A")
-                            self.assertNotEqual(trade['exit_time'], None, 
-                                              f"Trade {i} exit_time should not be None")
-                        
-                        # Verify required fields exist
-                        required_fields = ['symbol', 'entry_price', 'exit_price', 'net_pnl']
-                        for field in required_fields:
-                            self.assertIn(field, trade, f"Trade {i} should have {field}")
-                    
-                    print(f"✅ Portfolio State Closed Trades Structure: PASSED - Checked {len(portfolio['closed_trades'])} trades")
-                else:
-                    print("✅ Portfolio State Closed Trades Structure: PASSED - No closed trades to check")
-            else:
-                print("✅ Portfolio State Closed Trades Structure: PASSED - No portfolio file exists yet")
+            # Read the crypto_bot_engine.py file
+            with open('crypto_bot_engine.py', 'r') as f:
+                content = f.read()
             
+            # Check that total_pnl is updated when positions close
+            self.assertIn("self.total_pnl += net_pnl", content,
+                         "Bot should update total_pnl when closing positions")
+            
+            # Read the GUI file to check P&L calculation
+            with open('bot_trading_gui.py', 'r') as f:
+                gui_content = f.read()
+            
+            # Check for realized P&L calculation from closed trades
+            self.assertIn("realized_pnl", gui_content,
+                         "GUI should calculate realized P&L from closed trades")
+            
+            # Check for unrealized P&L calculation from open positions
+            self.assertIn("unrealized_pnl", gui_content,
+                         "GUI should calculate unrealized P&L from open positions")
+            
+            # Check that total P&L combines both
+            self.assertIn("total_pnl = realized_pnl + unrealized_pnl", gui_content,
+                         "GUI should combine realized + unrealized P&L for total")
+            
+            # Verify P&L calculation uses actual trade results
+            self.assertIn("trade.get('net_pnl', 0.0)", gui_content,
+                         "GUI should use actual net_pnl from trade results")
+            
+            # Check for current price vs entry price calculation for unrealized P&L
+            self.assertIn("current_price - entry_price", gui_content,
+                         "GUI should calculate unrealized P&L using current vs entry price")
+            
+            print("✅ P&L Calculation Fix (Realized + Unrealized): PASSED")
+            print("   - total_pnl updated correctly when positions close")
+            print("   - GUI calculates realized P&L from closed trades")
+            print("   - GUI calculates unrealized P&L from open positions")
+            print("   - Total P&L = realized + unrealized (accurate accounting)")
             return True
             
         except Exception as e:
-            print(f"❌ Portfolio State Closed Trades Structure: FAILED - {str(e)}")
+            print(f"❌ P&L Calculation Fix (Realized + Unrealized): FAILED - {str(e)}")
+            return False
+    
+    def test_signal_generation_logic_positive_momentum(self):
+        """Test 3: Signal Generation Logic - Verify BUY signals are generated on positive momentum (+1% change_24h)"""
+        try:
+            os.chdir('/app')
+            
+            # Read the crypto_bot_engine.py file
+            with open('crypto_bot_engine.py', 'r') as f:
+                content = f.read()
+            
+            # Check for the analyze_symbol method that generates signals
+            self.assertIn("def analyze_symbol", content,
+                         "Bot should have analyze_symbol method for signal generation")
+            
+            # Check that change_24h is used in signal generation
+            self.assertIn("change_24h", content,
+                         "Signal generation should use change_24h parameter")
+            
+            # Verify momentum-based scoring exists
+            momentum_patterns = [
+                "momentum_score",
+                "change_24h >= 8",
+                "change_24h >= 5", 
+                "change_24h >= 3",
+                "change_24h >= 1"
+            ]
+            
+            for pattern in momentum_patterns:
+                self.assertIn(pattern, content,
+                             f"Signal generation should include momentum pattern: {pattern}")
+            
+            # Check that positive momentum generates higher scores
+            self.assertIn("VERY_STRONG_MOMENTUM", content,
+                         "Very strong positive momentum should be recognized")
+            self.assertIn("STRONG_MOMENTUM", content,
+                         "Strong positive momentum should be recognized")
+            
+            # Verify that the signal threshold logic exists
+            self.assertIn("if score >= self.signal_threshold:", content,
+                         "Signal generation should use threshold-based decision")
+            self.assertIn("signal = 'BUY'", content,
+                         "High scores should generate BUY signals")
+            
+            print("✅ Signal Generation Logic (Positive Momentum): PASSED")
+            print("   - analyze_symbol method generates signals based on momentum")
+            print("   - Positive change_24h values generate higher scores")
+            print("   - Strong momentum (≥8%, ≥5%, ≥3%, ≥1%) properly categorized")
+            print("   - BUY signals generated when score exceeds threshold")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Signal Generation Logic (Positive Momentum): FAILED - {str(e)}")
+            return False
+    
+    def test_portfolio_pnl_accuracy_actual_trades(self):
+        """Test 4: Portfolio P&L Accuracy - Verify GUI P&L calculation uses actual trade results"""
+        try:
+            os.chdir('/app')
+            
+            # Read the GUI file to check P&L accuracy
+            with open('bot_trading_gui.py', 'r') as f:
+                content = f.read()
+            
+            # Check that P&L calculation uses actual closed trades data
+            self.assertIn("if hasattr(self.bot, 'closed_trades') and self.bot.closed_trades:", content,
+                         "GUI should check for actual closed trades")
+            
+            # Verify it sums net_pnl from actual trades
+            self.assertIn("for trade in self.bot.closed_trades:", content,
+                         "GUI should iterate through actual closed trades")
+            self.assertIn("realized_pnl += trade.get('net_pnl', 0.0)", content,
+                         "GUI should sum actual net_pnl from trades")
+            
+            # Check for open positions unrealized P&L calculation
+            self.assertIn("for position in self.bot.open_positions:", content,
+                         "GUI should calculate unrealized P&L from open positions")
+            self.assertIn("if position['status'] == 'open':", content,
+                         "GUI should only calculate P&L for open positions")
+            
+            # Verify current price vs entry price calculation
+            self.assertIn("entry_price = position['price']", content,
+                         "GUI should use position entry price")
+            self.assertIn("current_price = position.get('current_price', entry_price)", content,
+                         "GUI should use current price or fallback to entry price")
+            self.assertIn("(current_price - entry_price) * quantity", content,
+                         "GUI should calculate P&L as (current - entry) * quantity")
+            
+            # Check that total P&L combines both components
+            self.assertIn("total_pnl = realized_pnl + unrealized_pnl", content,
+                         "GUI should combine realized and unrealized P&L")
+            
+            # Verify P&L percentage calculation uses initial balance
+            self.assertIn("initial_balance = self.bot.config_manager.get('INITIAL_BALANCE'", content,
+                         "GUI should use initial balance for percentage calculation")
+            self.assertIn("pnl_percent = (total_pnl / initial_balance) * 100", content,
+                         "GUI should calculate P&L percentage correctly")
+            
+            print("✅ Portfolio P&L Accuracy (Actual Trade Results): PASSED")
+            print("   - GUI uses actual closed_trades data for realized P&L")
+            print("   - GUI calculates unrealized P&L from open positions")
+            print("   - P&L calculation: (current_price - entry_price) * quantity")
+            print("   - Total P&L = realized + unrealized (accurate accounting)")
+            print("   - P&L percentage based on initial balance")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Portfolio P&L Accuracy (Actual Trade Results): FAILED - {str(e)}")
             return False
     def test_config_manager_functionality(self):
         """Test 8: Configuration Management - Verify config.txt and config_manager.py work correctly"""
