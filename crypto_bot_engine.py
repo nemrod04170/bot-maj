@@ -1430,7 +1430,7 @@ class CryptoTradingBot:
                 self._close_position_scalping(existing_position, current_price)
                 return
             
-            # Créer l'ordre simulé (ACHAT) avec système de sécurité à 3 couches
+            # Créer l'ordre simulé avec SYSTÈME SIMPLIFIÉ : Stop Loss + Take Profit
             trade_data = {
                 'symbol': symbol,
                 'side': signal,
@@ -1440,6 +1440,7 @@ class CryptoTradingBot:
                 'price': entry_price,  # Prix maker, pas prix marché
                 'entry_price': entry_price,
                 'stop_loss': stop_loss,
+                'take_profit': take_profit,  # NOUVEAU: Take Profit fixe
                 'timestamp': datetime.now(),
                 'entry_time': datetime.now(),
                 'direction': direction,
@@ -1448,9 +1449,10 @@ class CryptoTradingBot:
                 'trading_fees': trading_fees,
                 'order_type': order_type,
                 'status': 'open',
-                'highest_price': entry_price,  # Pour trailing stop
-                'last_significant_move': datetime.now(),
-                'trailing_activated': False,
+                'entry_momentum': current_price,  # Pour surveillance intelligente
+                'entry_rsi': 50,  # TODO: Calculer RSI réel à l'entrée
+                'last_check': datetime.now(),
+                'system_type': 'SIMPLE_STOP_TAKE_PROFIT',  # Nouveau système
                 'order_id': f"sim_{symbol.replace('/', '')}_{int(time.time())}"
             }
             
