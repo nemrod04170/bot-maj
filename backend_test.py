@@ -2,15 +2,21 @@
 """
 Backend Testing Suite for Cryptocurrency Trading Bot
 Tests core functionality, configuration management, and data structures
+Focus on testing the corrected cryptocurrency trading bot functionality:
+1. Fixed "N/A" Issue - verify closed trades have proper exit_reason and exit_time
+2. Smart Scalping Logic - verify MIN_PROFIT_FOR_AUTO_SCALPING=0.5% prevents premature selling
+3. Trade Duration Calculation - verify durations are calculated correctly
+4. Position Closing - test that all position closing methods set exit_reason and exit_time
 """
 
 import sys
 import os
 import json
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 import tempfile
 import shutil
+import time
 
 # Add the app directory to Python path
 sys.path.insert(0, '/app')
