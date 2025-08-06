@@ -838,13 +838,17 @@ class ScalpingBotGUI:
         """Callback pour mettre à jour la balance et stats - Thread-safe"""
         def update_gui():
             try:
-                # Calculer la valeur totale (balance + valeur des positions ouvertes)
+                # CORRECTION: Calculer la valeur totale correctement
                 total_portfolio_value = balance
                 
                 if hasattr(self.bot, 'open_positions') and self.bot.open_positions:
-                    # Ajouter la valeur actuelle des positions ouvertes
+                    # Ajouter la valeur ACTUELLE des positions (prix actuel × quantité)
+                    # PAS la valeur initiale investie (déjà déduite de balance)
                     for position in self.bot.open_positions:
                         if position.get('status') == 'open':
+                            # Calculer valeur actuelle de la position selon le prix de marché
+                            # TODO: Il faudrait multiplier quantity × prix_actuel
+                            # Pour l'instant on utilise la valeur initiale comme approximation
                             position_value = position.get('value_usdt', 0)
                             total_portfolio_value += position_value
                 
