@@ -958,27 +958,44 @@ class ScalpingBotGUI:
         """Callback pour mettre à jour la balance et stats - Thread-safe"""
         def update_gui():
             try:
-                # CORRECTION: Calculer la valeur totale correctement
+                # Calculer la valeur totale du portefeuille
                 total_portfolio_value = balance
                 
                 if hasattr(self.bot, 'open_positions') and self.bot.open_positions:
-                    # Ajouter la valeur ACTUELLE des positions (prix actuel × quantité)
-                    # PAS la valeur initiale investie (déjà déduite de balance)
                     for position in self.bot.open_positions:
                         if position.get('status') == 'open':
-                            # Calculer valeur actuelle de la position selon le prix de marché
-                            # TODO: Il faudrait multiplier quantity × prix_actuel
-                            # Pour l'instant on utilise la valeur initiale comme approximation
+                            # Pour l'instant, utiliser valeur initiale (TODO: prix temps réel)
                             position_value = position.get('value_usdt', 0)
                             total_portfolio_value += position_value
                 
-                # Afficher balance liquide et valeur totale
-                self.balance_label.config(text=f"Balance: {balance:.2f} USDT | Total: {total_portfolio_value:.2f} USDT")
+                # Mettre à jour les nouveaux labels
+                self.balance_label.config(text=f"{balance:.2f} USDT")
+                self.total_value_label.config(text=f"{total_portfolio_value:.2f} USDT")
+                self.positions_count_label.config(text=f"{open_positions_count}")
                 
-                # Calculer stats
-                if hasattr(self.bot, 'total_trades') and self.bot.total_trades > 0:
-                    win_rate = (self.bot.winning_trades / self.bot.total_trades) * 100
-                    self.update_performance(total_portfolio_value, self.bot.total_pnl, self.bot.total_trades, win_rate, open_positions_count)
+                # P&L Total (changement depuis balance initiale)
+                if hasattr(self.bot, 'total_pnl'):
+                    pnl_percent = (self.bot.total_pnl / 1000) * 100 if self.bot.total_pnl != 0 else 0
+                    pnl_color = '#00ff88' if self.bot.total_pnl >= 0 else '#ff4444'
+                    
+                    self.pnl_label.config(
+                        text=f"{self.bot.total_pnl:+.2f} USDT ({pnl_percent:+.1f}%)",
+                        fg=pnl_color
+                    )
+                
+                # Statistiques de trading
+                if hasattr(self.bot, 'total_trades'):
+                    self.trades_count_label.config(text=f"{self.bot.total_trades}")
+                    
+                    if self.bot.total_trades > 0:
+                        win_rate = (self.bot.winning_trades / self.bot.total_trades) * 100
+                        winrate_color = '#00ff88' if win_rate >= 60 else '#ff8800' if win_rate >= 40 else '#ff4444'
+                        self.winrate_label.config(text=f"{win_rate:.1f}%", fg=winrate_color)
+                
+                # Mode de trading
+                mode = "RÉEL" if not self.bot.simulation_mode else "SIMULATION"
+                mode_color = '#ff4444' if mode == "RÉEL" else '#88aaff'
+                self.mode_label.config(text=mode, fg=mode_color)
                 
             except Exception as e:
                 print(f"❌ Erreur mise à jour balance GUI: {e}")
