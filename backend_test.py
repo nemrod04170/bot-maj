@@ -80,15 +80,19 @@ class TestCryptoTradingBot(unittest.TestCase):
                          "Code should have comment explaining the fix")
             
             # Check that the old WRONG logic (buy falling) is NOT present
-            buy_falling_patterns = [
-                "if change_24h < -1.0.*signal = 'BUY'",
-                "change_24h < -1.*BUY"
-            ]
+            # Look for patterns where falling trends would generate BUY signals
+            lines = content.split('\n')
+            for i, line in enumerate(lines):
+                # Check if there's a line with falling condition followed by BUY signal
+                if 'change_24h < -1' in line and i < len(lines) - 3:
+                    # Check next few lines for BUY signal
+                    next_lines = '\n'.join(lines[i:i+3])
+                    if 'BUY' in next_lines and 'signal' in next_lines:
+                        self.fail(f"Found old WRONG logic that buys falling trends at line {i+1}: {line}")
             
-            for pattern in buy_falling_patterns:
-                import re
-                if re.search(pattern, content, re.DOTALL):
-                    self.fail(f"Found old WRONG logic that buys falling trends: {pattern}")
+            # The corrected logic should have BUY for rising trends only
+            self.assertIn("# CORRIGÉ: Acheter quand ça MONTE", content,
+                         "Code should have comment explaining the corrected logic")
             
             # Verify SELL signal is for falling trends (correct)
             self.assertIn("elif change_24h < -1.0:", content,
