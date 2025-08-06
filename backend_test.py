@@ -30,7 +30,7 @@ class TestCryptoTradingBot(unittest.TestCase):
         self.original_cwd = os.getcwd()
         os.chdir(self.test_dir)
         
-        # Create test config file
+        # Create test config file with MIN_PROFIT_FOR_AUTO_SCALPING
         self.test_config = {
             'API_KEY': 'test_api_key',
             'API_SECRET': 'test_api_secret',
@@ -40,7 +40,8 @@ class TestCryptoTradingBot(unittest.TestCase):
             'POSITION_SIZE_USDT': 100.0,
             'STOP_LOSS_PERCENT': 2.0,
             'TAKE_PROFIT_PERCENT': 1.5,
-            'TIMEOUT_EXIT_SECONDS': 45
+            'TIMEOUT_EXIT_SECONDS': 45,
+            'MIN_PROFIT_FOR_AUTO_SCALPING': 0.5  # New configuration
         }
         
         with open('config.txt', 'w') as f:
