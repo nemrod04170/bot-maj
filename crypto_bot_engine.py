@@ -1291,6 +1291,10 @@ class CryptoTradingBot:
                 self.log(f"⏰ {position['symbol']}: Position fermée par TIMEOUT")
             elif reason == "STOP_LOSS":
                 self.log(f"🛑 {position['symbol']}: Position fermée par STOP LOSS")
+            elif reason == "TAKE_PROFIT":
+                self.log(f"🎉 {position['symbol']}: Position fermée par TAKE PROFIT")
+            else:
+                self.log(f"✅ {position['symbol']}: Position fermée ({reason})")
                 
         except Exception as e:
             self.log(f"❌ Erreur fermeture position {position['symbol']}: {e}")
