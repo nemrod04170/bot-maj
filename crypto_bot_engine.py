@@ -1292,6 +1292,33 @@ class CryptoTradingBot:
                         self._close_position_with_reason(position, current_price, "STRONG_PROFIT_EXIT")
                         return
                     
+                    # TRAILING STOP : Suivre les profits et vendre si ça redescend
+                    trailing_activation_threshold = self.config_manager.get('TRAILING_ACTIVATION_THRESHOLD', 1.0)  # 1%
+                    trailing_stop_distance = self.config_manager.get('TRAILING_STOP_DISTANCE', 0.3)  # 0.3%
+                    
+                    if isinstance(trailing_activation_threshold, str):
+                        trailing_activation_threshold = float(trailing_activation_threshold)
+                    if isinstance(trailing_stop_distance, str):
+                        trailing_stop_distance = float(trailing_stop_distance)
+                    
+                    # Activer le trailing stop si on atteint un profit suffisant
+                    if price_change_percent >= trailing_activation_threshold:
+                        if not trailing_activated:
+                            trailing_activated = True
+                            highest_profit = price_change_percent
+                            self.log(f"📈 {symbol}: TRAILING STOP activé - Profit: {highest_profit:+.2f}%")
+                        else:
+                            # Mettre à jour le plus haut profit
+                            if price_change_percent > highest_profit:
+                                highest_profit = price_change_percent
+                                self.log(f"🚀 {symbol}: Nouveau plus haut - Profit: {highest_profit:+.2f}%")
+                    
+                    # Vente trailing stop si le profit redescend trop
+                    if trailing_activated and price_change_percent < (highest_profit - trailing_stop_distance):
+                        self.log(f"📉 {symbol}: TRAILING STOP déclenché ! Max: {highest_profit:+.2f}% → Actuel: {price_change_percent:+.2f}%")
+                        self._close_position_with_reason(position, current_price, "TRAILING_STOP_PROFIT")
+                        return
+                    
                     # RÈGLE 4: GESTION TAKE PROFIT TRADITIONNEL (si pas encore vendu)
                     if current_price >= take_profit:
                         if tp_reached_time is None:
