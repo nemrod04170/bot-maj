@@ -1452,9 +1452,10 @@ class CryptoTradingBot:
             # NOUVEAU: Sauvegarder immédiatement après nouveau trade
             self.save_portfolio_state()
             
-            # Mettre à jour la balance selon le mode
+            # Mettre à jour la balance selon le mode  
             if self.simulation_mode:
-                self.simulated_balance -= position_size_usdt  # Déduire 100€ complets
+                # CORRECTION: Déduire seulement le capital RÉELLEMENT investi (après frais)
+                self.simulated_balance -= net_position_size  # 49.95€ au lieu de 50€
                 self.balance = self.simulated_balance
             
             # Affichage détaillé avec nouvelle logique
