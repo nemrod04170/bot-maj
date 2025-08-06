@@ -1531,12 +1531,12 @@ class CryptoTradingBot:
                 self._close_position_scalping(existing_position, current_price)
                 return
             
-            # Créer l'ordre simulé avec SYSTÈME SIMPLIFIÉ : Stop Loss + Take Profit
+            # Créer l'ordre simulé avec SYSTÈME SIMPLIFIÉ : Stop Loss + Take Profit (TOUJOURS LONG)
             trade_data = {
                 'symbol': symbol,
-                'side': signal,
-                'operation': operation,
-                'direction': direction,
+                'side': signal_display,  # Pour affichage (BUY ou SELL)
+                'operation': operation,  # TOUJOURS 'ACHAT'
+                'direction': direction,  # TOUJOURS 'LONG'
                 'quantity': quantity,
                 'price': entry_price,  # Prix maker, pas prix marché
                 'entry_price': entry_price,
