@@ -1263,7 +1263,32 @@ class CryptoTradingBot:
                         else:
                             momentum_trend = "BAISSE 📉"
                     
-                    # RÈGLE 3: GESTION TAKE PROFIT INTELLIGENT
+                    # RÈGLE 3: VENTE PROACTIVE quand ça MONTE (avant même d'atteindre le TP)
+                    
+                    # VENTE ANTICIPÉE : Si bon profit ET momentum faiblit
+                    early_profit_threshold = self.config_manager.get('EARLY_PROFIT_THRESHOLD', 0.8)  # 0.8% de profit
+                    if isinstance(early_profit_threshold, str):
+                        early_profit_threshold = float(early_profit_threshold)
+                    
+                    if price_change_percent >= early_profit_threshold:
+                        # On est en profit, surveiller le momentum pour vente anticipée
+                        if intelligent_tracking and len(price_history) >= min_samples:
+                            if momentum_percent < stagnation_threshold:
+                                self.log(f"💰 {symbol}: VENTE ANTICIPÉE - Profit {price_change_percent:+.2f}% + momentum faiblit")
+                                self._close_position_with_reason(position, current_price, "EARLY_PROFIT_EXIT")
+                                return
+                    
+                    # VENTE SUR PROFIT IMPORTANT : Si profit excellent, vendre immédiatement
+                    strong_profit_threshold = self.config_manager.get('STRONG_PROFIT_THRESHOLD', 1.8)  # 1.8% de profit
+                    if isinstance(strong_profit_threshold, str):
+                        strong_profit_threshold = float(strong_profit_threshold)
+                    
+                    if price_change_percent >= strong_profit_threshold:
+                        self.log(f"🎉 {symbol}: VENTE PROFIT EXCELLENT - {price_change_percent:+.2f}% de gains !")
+                        self._close_position_with_reason(position, current_price, "STRONG_PROFIT_EXIT")
+                        return
+                    
+                    # RÈGLE 4: GESTION TAKE PROFIT TRADITIONNEL (si pas encore vendu)
                     if current_price >= take_profit:
                         if tp_reached_time is None:
                             tp_reached_time = datetime.now()
