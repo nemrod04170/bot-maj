@@ -17,11 +17,19 @@ Scanner Scalping SIMPLIFIÉ - Critères éprouvés par les professionnels
 """
 
 
-def is_healthy_candle(ohlc, min_candle_body_ratio=0.6, max_upper_wick_ratio=0.3):
+def is_healthy_candle(ohlc, min_candle_body_ratio=None, max_upper_wick_ratio=None, config=None):
     """
     Vérifie que la dernière bougie n'est pas un 'fake pump' (trop de mèche).
     ohlc : tuple (open, high, low, close)
     """
+    # Utiliser les valeurs du config.txt si disponibles
+    if config:
+        min_candle_body_ratio = config.get('candle_body_ratio_min', 0.6) if min_candle_body_ratio is None else min_candle_body_ratio
+        max_upper_wick_ratio = config.get('candle_upper_wick_max', 0.3) if max_upper_wick_ratio is None else max_upper_wick_ratio
+    else:
+        min_candle_body_ratio = min_candle_body_ratio or 0.6
+        max_upper_wick_ratio = max_upper_wick_ratio or 0.3
+        
     open_, high, low, close = ohlc
     body = abs(close - open_)
     candle_range = high - low
@@ -52,32 +60,32 @@ class ScalpingScanner:
     def __init__(self, exchange, config):
         self.exchange = exchange
         
-        # CRITÈRES OPTIMISÉS DE SCALPING
-        self.min_volume_btc_eth = config.get('MIN_VOLUME_BTC_ETH', 50_000_000)
-        self.min_volume_altcoins = config.get('MIN_VOLUME_ALTCOINS', 8_000_000)
-        self.min_volume_microcaps = config.get('MIN_VOLUME_MICROCAPS', 1_000_000)
+        # CRITÈRES OPTIMISÉS DE SCALPING - depuis config.txt
+        self.min_volume_btc_eth = config.get('min_volume_btc_eth', config.get('MIN_VOLUME_BTC_ETH', 50_000_000))
+        self.min_volume_altcoins = config.get('min_volume_altcoins', config.get('MIN_VOLUME_ALTCOINS', 8_000_000))
+        self.min_volume_microcaps = config.get('min_volume_microcaps', config.get('MIN_VOLUME_MICROCAPS', 1_000_000))
         self.volume_spike_threshold = config.get('VOLUME_SPIKE_THRESHOLD', 130)
         
-        # Pump optimisé (0.8% minimum)
-        self.min_pump_3min = config.get('MIN_PUMP_3MIN', 0.8)
-        self.max_pump_3min = config.get('MAX_PUMP_3MIN', 2.0)
+        # Pump optimisé - depuis config.txt
+        self.min_pump_3min = config.get('pump_min_3min', config.get('MIN_PUMP_3MIN', 0.8))
+        self.max_pump_3min = config.get('pump_max_3min', config.get('MAX_PUMP_3MIN', 2.0))
         
-        # RSI optimisé (seuils 25/75)
+        # RSI optimisé - depuis config.txt
         self.rsi_period = config.get('RSI_PERIOD', 14)
-        self.rsi_oversold = config.get('RSI_OVERSOLD', 25)
-        self.rsi_overbought = config.get('RSI_OVERBOUGHT', 75)
+        self.rsi_oversold = config.get('rsi_min', config.get('RSI_OVERSOLD', 25))
+        self.rsi_overbought = config.get('rsi_max', config.get('RSI_OVERBOUGHT', 75))
         
-        # EMA
-        self.ema_fast = config.get('EMA_FAST', 9)
-        self.ema_slow = config.get('EMA_SLOW', 21)
+        # EMA - depuis config.txt
+        self.ema_fast = config.get('ema_fast', config.get('EMA_FAST', 9))
+        self.ema_slow = config.get('ema_slow', config.get('EMA_SLOW', 21))
         
-        # FILTRES DE QUALITÉ AVANCÉS
-        self.max_spread_percent = config.get('MAX_SPREAD_PERCENT', 0.1)
-        self.min_order_book_depth = config.get('MIN_ORDER_BOOK_DEPTH', 50)
-        self.min_required_signals = config.get('MIN_REQUIRED_SIGNALS', 2)
+        # FILTRES DE QUALITÉ AVANCÉS - depuis config.txt
+        self.max_spread_percent = config.get('spread_max', config.get('MAX_SPREAD_PERCENT', 0.1))
+        self.min_order_book_depth = config.get('orderbook_depth_min', config.get('MIN_ORDER_BOOK_DEPTH', 50))
+        self.min_required_signals = config.get('signals_required', config.get('MIN_REQUIRED_SIGNALS', 2))
         
-        # FILTRAGE DES PAIRES PAR SUFFIXES
-        pair_suffixes_raw = config.get('PAIR_SUFFIXES', 'USDT,BTC,ETH')
+        # FILTRAGE DES PAIRES PAR SUFFIXES - depuis config.txt
+        pair_suffixes_raw = config.get('filter_suffixes', config.get('PAIR_SUFFIXES', 'USDT,BTC,ETH'))
         if isinstance(pair_suffixes_raw, list):
             self.pair_suffixes = pair_suffixes_raw
         else:
