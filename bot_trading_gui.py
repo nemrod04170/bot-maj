@@ -656,9 +656,15 @@ class ScalpingBotGUI:
             )
             
             if result:
+                # LOG avant reset
+                positions_count = len(self.bot.open_positions) if self.bot.open_positions else 0
+                self.bot.log(f"🔄 RESET SIMULATION: Fermeture de {positions_count} positions ouvertes")
+                
                 # Utiliser les valeurs du config.txt (conversion en nombres)
                 self.bot.simulated_balance = float(initial_balance)
                 self.bot.balance = float(initial_balance)
+                
+                # SUPPRIMER TOUS LES TRADES EN COURS
                 self.bot.open_positions = []
                 self.bot.total_trades = 0
                 self.bot.winning_trades = 0
@@ -667,17 +673,21 @@ class ScalpingBotGUI:
                 # Nettoyer l'historique des trades fermés
                 self.bot.closed_trades = []
                 
+                # ARRÊTER la surveillance des positions (important !)
+                if hasattr(self.bot, 'position_monitor_active'):
+                    self.bot.position_monitor_active = False
+                
                 # Sauvegarder immédiatement le reset
                 self.bot.save_portfolio_state()
                 
-                # Nettoyer l'affichage
+                # Nettoyer l'affichage des positions
                 self.positions_text.delete(1.0, tk.END)
-                self.positions_text.insert(1.0, "🔄 SIMULATION RÉINITIALISÉE\n\n")
+                self.positions_text.insert(1.0, "🔄 SIMULATION RÉINITIALISÉE\n\n✅ Toutes les positions ouvertes supprimées\n✅ Balance remise à {:.2f}€\n\n".format(float(initial_balance)))
                 
                 # Nettoyer l'historique des trades
                 self.trades_history_text.config(state='normal')
                 self.trades_history_text.delete(1.0, tk.END)
-                self.trades_history_text.insert(1.0, "🔄 Aucun trade fermé pour le moment...\n")
+                self.trades_history_text.insert(1.0, "🔄 Historique réinitialisé - Aucun trade fermé\n")
                 self.trades_history_text.config(state='disabled')
                 
                 # Notifier balance
