@@ -60,29 +60,29 @@ class ScalpingScanner:
     def __init__(self, exchange, config):
         self.exchange = exchange
         
-        # CRITÈRES OPTIMISÉS DE SCALPING - depuis config.txt
-        self.min_volume_btc_eth = config.get('min_volume_btc_eth', config.get('MIN_VOLUME_BTC_ETH', 50_000_000))
-        self.min_volume_altcoins = config.get('min_volume_altcoins', config.get('MIN_VOLUME_ALTCOINS', 8_000_000))
-        self.min_volume_microcaps = config.get('min_volume_microcaps', config.get('MIN_VOLUME_MICROCAPS', 1_000_000))
-        self.volume_spike_threshold = config.get('VOLUME_SPIKE_THRESHOLD', 130)
+        # CRITÈRES OPTIMISÉS DE SCALPING - depuis config.txt (conversion en nombres)
+        self.min_volume_btc_eth = float(config.get('min_volume_btc_eth') or config.get('MIN_VOLUME_BTC_ETH', 50_000_000))
+        self.min_volume_altcoins = float(config.get('min_volume_altcoins') or config.get('MIN_VOLUME_ALTCOINS', 8_000_000))
+        self.min_volume_microcaps = float(config.get('min_volume_microcaps') or config.get('MIN_VOLUME_MICROCAPS', 1_000_000))
+        self.volume_spike_threshold = float(config.get('VOLUME_SPIKE_THRESHOLD', 130))
         
-        # Pump optimisé - depuis config.txt
-        self.min_pump_3min = config.get('pump_min_3min', config.get('MIN_PUMP_3MIN', 0.8))
-        self.max_pump_3min = config.get('pump_max_3min', config.get('MAX_PUMP_3MIN', 2.0))
+        # Pump optimisé - depuis config.txt (conversion en nombres)
+        self.min_pump_3min = float(config.get('pump_min_3min') or config.get('MIN_PUMP_3MIN', 0.8))
+        self.max_pump_3min = float(config.get('pump_max_3min') or config.get('MAX_PUMP_3MIN', 2.0))
         
-        # RSI optimisé - depuis config.txt
-        self.rsi_period = config.get('RSI_PERIOD', 14)
-        self.rsi_oversold = config.get('rsi_min', config.get('RSI_OVERSOLD', 25))
-        self.rsi_overbought = config.get('rsi_max', config.get('RSI_OVERBOUGHT', 75))
+        # RSI optimisé - depuis config.txt (conversion en nombres)
+        self.rsi_period = int(config.get('RSI_PERIOD', 14))
+        self.rsi_oversold = float(config.get('rsi_min') or config.get('RSI_OVERSOLD', 25))
+        self.rsi_overbought = float(config.get('rsi_max') or config.get('RSI_OVERBOUGHT', 75))
         
-        # EMA - depuis config.txt
-        self.ema_fast = config.get('ema_fast', config.get('EMA_FAST', 9))
-        self.ema_slow = config.get('ema_slow', config.get('EMA_SLOW', 21))
+        # EMA - depuis config.txt (conversion en nombres)
+        self.ema_fast = int(config.get('ema_fast') or config.get('EMA_FAST', 9))
+        self.ema_slow = int(config.get('ema_slow') or config.get('EMA_SLOW', 21))
         
-        # FILTRES DE QUALITÉ AVANCÉS - depuis config.txt
-        self.max_spread_percent = config.get('spread_max', config.get('MAX_SPREAD_PERCENT', 0.1))
-        self.min_order_book_depth = config.get('orderbook_depth_min', config.get('MIN_ORDER_BOOK_DEPTH', 50))
-        self.min_required_signals = config.get('signals_required', config.get('MIN_REQUIRED_SIGNALS', 2))
+        # FILTRES DE QUALITÉ AVANCÉS - depuis config.txt (conversion en nombres)
+        self.max_spread_percent = float(config.get('spread_max') or config.get('MAX_SPREAD_PERCENT', 0.1))
+        self.min_order_book_depth = int(config.get('orderbook_depth_min') or config.get('MIN_ORDER_BOOK_DEPTH', 50))
+        self.min_required_signals = int(config.get('signals_required') or config.get('MIN_REQUIRED_SIGNALS', 2))
         
         # FILTRAGE DES PAIRES PAR SUFFIXES - depuis config.txt
         pair_suffixes_raw = config.get('filter_suffixes', config.get('PAIR_SUFFIXES', 'USDT,BTC,ETH'))
