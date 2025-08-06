@@ -1868,6 +1868,9 @@ class CryptoTradingBot:
             closed_trade['closed_at'] = datetime.now().isoformat()
             self.closed_trades.append(closed_trade)
             
+            # MISE À JOUR du P&L total
+            self.total_pnl += net_pnl
+            
             # NOUVEAU: Sauvegarder immédiatement après fermeture
             self.save_portfolio_state()
             
