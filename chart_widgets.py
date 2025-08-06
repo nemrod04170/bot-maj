@@ -28,12 +28,12 @@ class MiniChart:
         self.symbol = symbol
         self.config = config or {}
         
-        # Dimensions configurables depuis config.txt
-        self.width = self.config.get('chart_width', 200)
-        self.height = self.config.get('chart_height', 120)
+        # Dimensions depuis config.txt uniquement
+        self.width = self.config.get('chart_width') or 200
+        self.height = self.config.get('chart_height') or 120
         
-        # Données du graphique - maxlen configurable
-        history_length = self.config.get('chart_history_length', 60)
+        # Données du graphique - maxlen depuis config.txt uniquement
+        history_length = self.config.get('chart_history_length') or 60
         self.price_history = deque(maxlen=history_length)
         self.time_history = deque(maxlen=history_length)
         
@@ -44,15 +44,15 @@ class MiniChart:
         self.signal = "HOLD"
         self.signal_score = 0
         
-        # Couleurs configurables depuis config.txt
+        # Couleurs depuis config.txt uniquement
         self.colors = {
-            'background': self.config.get('chart_bg_color', '#2d2d2d'),
-            'plot_bg': self.config.get('chart_plot_bg_color', '#1a1a1a'),
-            'line_color': self.config.get('chart_line_color', '#00ff88'),
-            'text_color': self.config.get('chart_text_color', 'white'),
-            'positive_color': self.config.get('chart_positive_color', '#00ff88'),
-            'negative_color': self.config.get('chart_negative_color', '#ff4444'),
-            'neutral_color': self.config.get('chart_neutral_color', '#ffaa00')
+            'background': self.config.get('chart_bg_color') or '#2d2d2d',
+            'plot_bg': self.config.get('chart_plot_bg_color') or '#1a1a1a',
+            'line_color': self.config.get('chart_line_color') or '#00ff88',
+            'text_color': self.config.get('chart_text_color') or 'white',
+            'positive_color': self.config.get('chart_positive_color') or '#00ff88',
+            'negative_color': self.config.get('chart_negative_color') or '#ff4444',
+            'neutral_color': self.config.get('chart_neutral_color') or '#ffaa00'
         }
         
         # Créer l'interface
@@ -142,8 +142,8 @@ class MiniChart:
         self.ax.set_xticks([])
         self.ax.set_yticks([])
         
-        # Ligne de prix - épaisseur configurable
-        line_width = self.config.get('chart_line_width', 1.5)
+        # Ligne de prix - épaisseur depuis config.txt uniquement
+        line_width = self.config.get('chart_line_width') or 1.5
         self.price_line, = self.ax.plot([], [], color=self.colors['line_color'], linewidth=line_width)
         
         # Canvas tkinter
@@ -174,9 +174,9 @@ class MiniChart:
     
     def _update_labels(self):
         """Met à jour les labels textuels"""
-        # Prix avec formatage intelligent - seuils configurables
-        price_threshold_1 = self.config.get('price_format_threshold_1', 1)
-        price_threshold_2 = self.config.get('price_format_threshold_2', 0.01)
+        # Prix avec formatage intelligent - seuils depuis config.txt uniquement
+        price_threshold_1 = self.config.get('price_format_threshold_1') or 1
+        price_threshold_2 = self.config.get('price_format_threshold_2') or 0.01
         
         if self.current_price >= price_threshold_1:
             price_text = f"${self.current_price:.2f}"
@@ -216,8 +216,8 @@ class MiniChart:
             # Mettre à jour la ligne
             self.price_line.set_data(x_data, prices)
             
-            # Ajuster les limites - marges configurables
-            chart_margin = self.config.get('chart_margin_percent', 0.1)
+            # Ajuster les limites - marges depuis config.txt uniquement
+            chart_margin = self.config.get('chart_margin_percent') or 0.1
             if prices:
                 min_price = min(prices)
                 max_price = max(prices)
@@ -227,9 +227,9 @@ class MiniChart:
                     self.ax.set_ylim(min_price - price_range * chart_margin, 
                                    max_price + price_range * chart_margin)
                 else:
-                    # Prix stable - marges configurables
-                    stable_margin_low = self.config.get('chart_stable_margin_low', 0.999)
-                    stable_margin_high = self.config.get('chart_stable_margin_high', 1.001)
+                    # Prix stable - marges depuis config.txt uniquement
+                    stable_margin_low = self.config.get('chart_stable_margin_low') or 0.999
+                    stable_margin_high = self.config.get('chart_stable_margin_high') or 1.001
                     self.ax.set_ylim(min_price * stable_margin_low, max_price * stable_margin_high)
                 
                 self.ax.set_xlim(0, len(prices) - 1)
@@ -246,8 +246,8 @@ class CryptoChartsPanel:
     def __init__(self, parent, config=None):
         self.parent = parent
         self.config = config or {}
-        # Nombre max de graphiques configurable depuis config.txt
-        self.max_charts = self.config.get('max_charts', 6)
+        # Nombre max de graphiques depuis config.txt uniquement
+        self.max_charts = self.config.get('max_charts') or 6
         self.charts = {}  # symbol -> MiniChart
         
         # Créer le panel principal
@@ -256,12 +256,12 @@ class CryptoChartsPanel:
     def _create_panel(self):
         """Crée le panel principal"""
         # Frame principal avec scrollbar si nécessaire
-        bg_color = self.config.get('panel_bg_color', '#1a1a1a')
+        bg_color = self.config.get('panel_bg_color') or '#1a1a1a'
         self.main_frame = tk.Frame(self.parent, bg=bg_color)
         self.main_frame.pack(fill='both', expand=True, padx=5, pady=5)
         
-        # Titre - couleurs configurables
-        title_color = self.config.get('panel_title_color', 'white')
+        # Titre - couleurs depuis config.txt uniquement
+        title_color = self.config.get('panel_title_color') or 'white'
         title_label = tk.Label(
             self.main_frame,
             text="📈 GRAPHIQUES PRIX TEMPS RÉEL",
@@ -345,22 +345,22 @@ class LargeChart:
         self.parent = parent
         self.config = config or {}
         
-        # Dimensions configurables depuis config.txt
-        self.width = self.config.get('large_chart_width', 600)
-        self.height = self.config.get('large_chart_height', 300)
+        # Dimensions depuis config.txt uniquement
+        self.width = self.config.get('large_chart_width') or 600
+        self.height = self.config.get('large_chart_height') or 300
         
         # Données
         self.price_data = []
         self.volume_data = []
         self.time_data = []
         
-        # Couleurs configurables
+        # Couleurs depuis config.txt uniquement
         self.colors = {
-            'background': self.config.get('large_chart_bg_color', '#2d2d2d'),
-            'plot_bg': self.config.get('large_chart_plot_bg_color', '#1a1a1a'),
-            'price_line_color': self.config.get('large_chart_price_line_color', '#00ff88'),
-            'volume_color': self.config.get('large_chart_volume_color', '#666666'),
-            'text_color': self.config.get('large_chart_text_color', 'white')
+            'background': self.config.get('large_chart_bg_color') or '#2d2d2d',
+            'plot_bg': self.config.get('large_chart_plot_bg_color') or '#1a1a1a',
+            'price_line_color': self.config.get('large_chart_price_line_color') or '#00ff88',
+            'volume_color': self.config.get('large_chart_volume_color') or '#666666',
+            'text_color': self.config.get('large_chart_text_color') or 'white'
         }
         
         # Créer l'interface
@@ -417,15 +417,15 @@ class LargeChart:
             prices = price_df['close']
             volumes = price_df['volume']
             
-            # Graphique des prix - épaisseur configurable
-            price_line_width = self.config.get('large_chart_price_line_width', 2)
+            # Graphique des prix - épaisseur depuis config.txt uniquement
+            price_line_width = self.config.get('large_chart_price_line_width') or 2
             self.ax_price.clear()
             self.ax_price.plot(times, prices, color=self.colors['price_line_color'], linewidth=price_line_width)
             self.ax_price.set_title(f"{symbol} - Prix", color=self.colors['text_color'], fontsize=10)
             self.ax_price.tick_params(colors='gray', labelsize=8)
             
-            # Graphique des volumes - transparence configurable
-            volume_alpha = self.config.get('large_chart_volume_alpha', 0.7)
+            # Graphique des volumes - transparence depuis config.txt uniquement
+            volume_alpha = self.config.get('large_chart_volume_alpha') or 0.7
             self.ax_volume.clear()
             self.ax_volume.bar(times, volumes, color=self.colors['volume_color'], alpha=volume_alpha)
             self.ax_volume.set_title("Volume", color=self.colors['text_color'], fontsize=10)
@@ -449,17 +449,8 @@ if __name__ == "__main__":
     root.geometry("800x600")
     root.configure(bg='#1a1a1a')
     
-    # Configuration de test
-    test_config = {
-        'max_charts': 6,
-        'chart_width': 200,
-        'chart_height': 120,
-        'chart_history_length': 60,
-        'chart_line_width': 1.5,
-        'chart_bg_color': '#2d2d2d',
-        'chart_positive_color': '#00ff88',
-        'chart_negative_color': '#ff4444'
-    }
+    # Configuration de test depuis config.txt
+    test_config = {}
     
     # Créer le panel de graphiques avec config
     charts_panel = CryptoChartsPanel(root, test_config)
@@ -475,16 +466,18 @@ if __name__ == "__main__":
         def update_prices():
             while True:
                 for symbol in test_symbols:
-                    # Prix simulé - valeurs configurables
-                    base_prices = test_config.get('test_base_prices', {
-                        'BTC/USDT': 50000,
-                        'ETH/USDT': 3000,
-                        'BNB/USDT': 300
-                    })
-                    base_price = base_prices.get(symbol, 100)
-                    price_variance = test_config.get('test_price_variance', 0.02)
-                    volume_min = test_config.get('test_volume_min', 1000000)
-                    volume_max = test_config.get('test_volume_max', 10000000)
+                    # Prix simulé - valeurs depuis config.txt uniquement ou fallback
+                    base_prices = test_config.get('test_base_prices', {})
+                    if 'BTC' in symbol:
+                        base_price = base_prices.get(symbol, 50000)
+                    elif 'ETH' in symbol:
+                        base_price = base_prices.get(symbol, 3000)  
+                    else:
+                        base_price = base_prices.get(symbol, 300)
+                        
+                    price_variance = test_config.get('test_price_variance') or 0.02
+                    volume_min = test_config.get('test_volume_min') or 1000000
+                    volume_max = test_config.get('test_volume_max') or 10000000
                     
                     price = base_price * (1 + random.uniform(-price_variance, price_variance))
                     volume = random.uniform(volume_min, volume_max)
@@ -499,8 +492,8 @@ if __name__ == "__main__":
                     
                     charts_panel.update_chart_signal(symbol, signal, score)
                 
-                # Intervalle de mise à jour configurable
-                update_interval = test_config.get('test_update_interval', 2)
+                # Intervalle de mise à jour depuis config.txt uniquement
+                update_interval = test_config.get('test_update_interval') or 2
                 time.sleep(update_interval)
         
         thread = threading.Thread(target=update_prices, daemon=True)
