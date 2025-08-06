@@ -571,19 +571,22 @@ class TestCryptoTradingBot(unittest.TestCase):
 def run_backend_tests():
     """Run all backend tests and return results"""
     print("🚀 Starting Cryptocurrency Trading Bot Backend Tests")
-    print("=" * 60)
+    print("🎯 Focus: Testing corrected trading bot functionality")
+    print("=" * 70)
     
     # Manual test execution for better control
     test_instance = TestCryptoTradingBot()
     test_results = []
     
     test_methods = [
-        'test_config_manager_functionality',
-        'test_crypto_bot_engine_structure', 
-        'test_gui_structure',
-        'test_trade_data_structure',
-        'test_portfolio_state_management',
-        'test_closed_trade_formatting_structure'
+        'test_min_profit_auto_scalping_configuration',
+        'test_close_position_with_reason_function',
+        'test_close_position_scalping_na_fix',
+        'test_smart_scalping_logic',
+        'test_position_closing_methods_use_reason',
+        'test_trade_duration_calculation_structure',
+        'test_portfolio_state_closed_trades_structure',
+        'test_config_manager_functionality'
     ]
     
     for method in test_methods:
@@ -602,14 +605,18 @@ def run_backend_tests():
     passed = sum(test_results)
     total = len(test_results)
     
-    print("\n" + "=" * 60)
+    print("\n" + "=" * 70)
     print(f"📊 TEST SUMMARY: {passed}/{total} tests passed")
     
     if passed == total:
-        print("🎉 ALL TESTS PASSED - Backend functionality is working correctly!")
+        print("🎉 ALL TESTS PASSED - Corrected trading bot functionality is working!")
+        print("✅ Fixed 'N/A' Issue: exit_reason and exit_time are properly set")
+        print("✅ Smart Scalping Logic: MIN_PROFIT_FOR_AUTO_SCALPING prevents premature selling")
+        print("✅ Trade Duration Calculation: entry_time and exit_time are handled correctly")
+        print("✅ Position Closing: All methods properly set exit_reason and exit_time")
         return True
     else:
-        print(f"⚠️  {total - passed} tests failed - Backend needs attention")
+        print(f"⚠️  {total - passed} tests failed - Some fixes need attention")
         return False
 
 if __name__ == "__main__":
