@@ -1434,9 +1434,19 @@ class CryptoTradingBot:
             
             # Critères simples pour générer des trades - LOGIQUE SCALPING CORRIGÉE
             # CORRIGÉ: Acheter quand ça MONTE, pas quand ça descend !
-            if change_24h > 1.0:  # +1% = signal d'achat (acheter la momentum ascendante)
+            # Utiliser les seuils du config.txt au lieu de valeurs codées en dur
+            pump_min_threshold = self.config_manager.get('pump_min_3min', 0.5)  # 0.5% par défaut
+            pump_max_threshold = self.config_manager.get('pump_max_3min', 3.0)  # 3.0% par défaut
+            
+            # Convertir en float si nécessaire
+            if isinstance(pump_min_threshold, str):
+                pump_min_threshold = float(pump_min_threshold)
+            if isinstance(pump_max_threshold, str):
+                pump_max_threshold = float(pump_max_threshold)
+            
+            if pump_min_threshold <= change_24h <= pump_max_threshold:  # Entre 0.5% et 3.0% = signal d'achat optimal
                 signal = 'BUY'
-            elif change_24h < -1.0:  # -1% = signal de vente (éviter la chute)  
+            elif change_24h < -pump_min_threshold:  # Moins de -0.5% = signal de vente (éviter la chute)  
                 signal = 'SELL'
             
             # NOUVELLE LOGIQUE : ENTRER UNIQUEMENT SUR SIGNAL BUY
