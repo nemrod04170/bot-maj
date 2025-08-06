@@ -1470,22 +1470,14 @@ class CryptoTradingBot:
             take_profit_buy_multiplier = self.config_manager.get('TAKE_PROFIT_BUY_MULTIPLIER')
             take_profit_sell_multiplier = self.config_manager.get('TAKE_PROFIT_SELL_MULTIPLIER')
             
-            # CORRECTION: TOUJOURS FAIRE DU LONG (pas de SHORT)
-            # Les signaux BUY et SELL sont juste des indications de momentum
-            # Mais on achète TOUJOURS (LONG uniquement)
+            # SIMPLIFIÉ : TOUJOURS DU LONG (signal BUY uniquement)
+            operation = 'ACHAT'
+            direction = 'LONG' 
+            signal_display = 'BUY'  # Toujours BUY maintenant
             
-            operation = 'ACHAT'  # TOUJOURS un achat
-            direction = 'LONG'   # TOUJOURS long
-            
-            # STOP LOSS et TAKE PROFIT toujours dans le même sens (LONG)
-            stop_loss = entry_price * (stop_loss_buy_multiplier or 0.995)    # TOUJOURS -0.5% (plus bas)
-            take_profit = entry_price * (take_profit_buy_multiplier or 1.015) # TOUJOURS +1.5% (plus haut)
-            
-            # Le signal influence juste l'affichage pour information
-            if signal == 'BUY':
-                signal_display = 'BUY'
-            else:
-                signal_display = 'SELL'  # Mais on fait quand même un ACHAT (LONG)
+            # STOP LOSS et TAKE PROFIT pour LONG uniquement
+            stop_loss = entry_price * (stop_loss_buy_multiplier or 0.995)    # -0.5% (plus bas)
+            take_profit = entry_price * (take_profit_buy_multiplier or 1.015) # +1.5% (plus haut)
             
             # Calculer la taille de position selon la stratégie OPTIMISÉE (depuis config.txt UNIQUEMENT)
             max_position_per_crypto = self.config_manager.get('order_size') or self.config_manager.get('POSITION_SIZE_USDT')
