@@ -568,10 +568,10 @@ def run_backend_tests():
     
     if passed == total:
         print("🎉 ALL TESTS PASSED - Corrected trading bot functionality is working!")
-        print("✅ Fixed 'N/A' Issue: exit_reason and exit_time are properly set")
-        print("✅ Smart Scalping Logic: MIN_PROFIT_FOR_AUTO_SCALPING prevents premature selling")
-        print("✅ Trade Duration Calculation: entry_time and exit_time are handled correctly")
-        print("✅ Position Closing: All methods properly set exit_reason and exit_time")
+        print("✅ TRADING STRATEGY FIX: Bot now buys RISING trends (+1%) instead of falling (-1%)")
+        print("✅ P&L CALCULATION FIX: Total P&L = realized P&L + unrealized P&L (accurate)")
+        print("✅ SIGNAL GENERATION: BUY signals generated on positive momentum")
+        print("✅ PORTFOLIO ACCURACY: GUI P&L uses actual trade results")
         return True
     else:
         print(f"⚠️  {total - passed} tests failed - Some fixes need attention")
