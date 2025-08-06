@@ -249,6 +249,20 @@ class ScalpingBotGUI:
         )
         self.pnl_label.pack(side='right')
         
+        # Frais totaux
+        fees_frame = tk.Frame(portfolio_frame, bg='#2d2d2d')
+        fees_frame.pack(fill='x', padx=10, pady=(0,10))
+        
+        tk.Label(fees_frame, text="💳 Frais Totaux:", 
+                font=('Arial', 10), fg='#cccccc', bg='#2d2d2d').pack(side='left')
+        
+        self.fees_label = tk.Label(
+            fees_frame, text="-0.00 USDT",
+            fg='#ff8800', bg='#2d2d2d',
+            font=('Arial', 11, 'bold')
+        )
+        self.fees_label.pack(side='right')
+        
         # === SECTION STATISTIQUES ===
         stats_frame = tk.LabelFrame(right_frame, text="📊 STATISTIQUES", 
                                   font=('Arial', 10, 'bold'), fg='#00aaff', bg='#2d2d2d',
