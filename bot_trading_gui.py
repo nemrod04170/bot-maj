@@ -986,9 +986,11 @@ class ScalpingBotGUI:
                 else:
                     # === POSITION OUVERTE (ACHAT) ===
                     stop_loss = trade_data['stop_loss']
+                    take_profit = trade_data.get('take_profit')  # NOUVEAU: Take Profit
                     change_24h = trade_data.get('change_24h', 0)
+                    system_type = trade_data.get('system_type', 'LEGACY')
                     
-                    # Formatage SL seulement (système 3 couches)
+                    # Formatage Stop Loss
                     if stop_loss > 1:
                         sl_str = f"${stop_loss:.4f}"
                     elif stop_loss > 0.01:
@@ -998,6 +1000,18 @@ class ScalpingBotGUI:
                     else:
                         sl_str = f"${stop_loss:.10f}"
                     
+                    # Formatage Take Profit (si disponible)
+                    tp_str = ""
+                    if take_profit:
+                        if take_profit > 1:
+                            tp_str = f"${take_profit:.4f}"
+                        elif take_profit > 0.01:
+                            tp_str = f"${take_profit:.6f}"
+                        elif take_profit > 0.0001:
+                            tp_str = f"${take_profit:.8f}"
+                        else:
+                            tp_str = f"${take_profit:.10f}"
+                    
                     # Couleur selon le signal
                     if signal == 'BUY':
                         color = '#00aa44'
@@ -1006,8 +1020,19 @@ class ScalpingBotGUI:
                         color = '#aa4400'
                         arrow = '📉'
                     
-                    # Affichage achat
-                    trade_text = f"""[{timestamp}] 🎮 TRADE OUVERT: {symbol}
+                    # Affichage selon le système
+                    if system_type == 'SIMPLE_STOP_TAKE_PROFIT' and tp_str:
+                        # NOUVEAU système : Afficher Stop Loss + Take Profit
+                        trade_text = f"""[{timestamp}] 🎮 TRADE OUVERT: {symbol}
+   {arrow} {signal} {operation} | Momentum: {change_24h:+.2f}%
+   💰 Prix: {price_str} | Quantité: {quantity:.8f}
+   🛑 Stop Loss: {sl_str} | 🎯 Take Profit: {tp_str}
+   💸 Valeur: {value_usdt:.2f}€ | ID: {order_id}
+
+"""
+                    else:
+                        # Ancien système : Afficher seulement Stop Loss
+                        trade_text = f"""[{timestamp}] 🎮 TRADE OUVERT: {symbol}
    {arrow} {signal} {operation} | Momentum: {change_24h:+.2f}%
    💰 Prix: {price_str} | Quantité: {quantity:.8f}
    🎯 Stop Loss: {sl_str}
