@@ -1577,17 +1577,13 @@ class CryptoTradingBot:
             print(f"   Frais entrée: ${entry_fees:.3f} {fee_currency} ({trading_fees*100:.3f}% {order_type})")
             print(f"   Capital investi: ${net_position_size:.2f}")
             print(f"   VIP Level: {vip_level} | BNB: {'✅' if use_bnb_discount else '❌'} | Type: {order_type}")
-            print(f"   Stop Loss: ${stop_loss:.10f} (-{self.stop_loss_percent}%)")
+            print(f"   Stop Loss: ${stop_loss:.10f}")
+            print(f"   Take Profit: ${take_profit:.10f}")
             print(f"   Balance: ${self.simulated_balance:.2f}")
-            print(f"   🔒 Sécurité 3 couches: Trailing {self.trailing_activation_percent}%/{self.trailing_stop_percent}% | Timeout {self.timeout_exit_seconds}s | Stop {self.stop_loss_percent}%")
+            print(f"   🎯 NOUVEAU SYSTÈME: Stop Loss + Take Profit + Surveillance intelligente")
             
-            # NOUVEAU: Démarrer le système de surveillance à 3 couches
-            if self.trailing_stop_enabled:
-                threading.Thread(target=self._monitor_position_3_layers, args=[trade_data], daemon=True).start()
-            else:
-                # Fallback: système traditionnel si trailing stop désactivé
-                close_delay = 45  # 45 secondes par défaut
-                threading.Timer(close_delay, self._auto_close_scalping_position, args=[trade_data]).start()
+            # DÉMARRER LE NOUVEAU SYSTÈME DE SURVEILLANCE SIMPLIFIÉ
+            threading.Thread(target=self._monitor_position_simple, args=[trade_data], daemon=True).start()
             
             # Notifier le GUI
             for callback in self.callbacks.get('trade_executed', []):
