@@ -189,35 +189,139 @@ class ScalpingBotGUI:
         self.closed_trades = []  # Liste des trades fermés
         self.trades_history_text.insert(1.0, "🔄 Aucun trade fermé pour le moment...\n")
         
-        # Colonne droite - Trading et positions
-        right_frame = tk.Frame(main_frame, bg='#2d2d2d', relief='raised', bd=2)
+        # Colonne droite - Dashboard de Trading Professionnel
+        right_frame = tk.Frame(main_frame, bg='#1a1a1a', relief='raised', bd=2)
         right_frame.pack(side='right', fill='both', expand=True, padx=(5, 0))
         
-        tk.Label(right_frame, text="💰 TRADING & POSITIONS", font=('Arial', 12, 'bold'), 
-                fg='white', bg='#2d2d2d').pack(pady=10)
+        # === HEADER DASHBOARD ===
+        header_frame = tk.Frame(right_frame, bg='#333333', height=50)
+        header_frame.pack(fill='x', padx=5, pady=(5, 10))
+        header_frame.pack_propagate(False)
         
-        # Solde et P&L
+        tk.Label(header_frame, text="📊 DASHBOARD DE TRADING", 
+                font=('Arial', 14, 'bold'), fg='#00ff88', bg='#333333').pack(pady=15)
+        
+        # === SECTION PORTEFEUILLE ===
+        portfolio_frame = tk.LabelFrame(right_frame, text="💰 PORTEFEUILLE", 
+                                      font=('Arial', 10, 'bold'), fg='#ffaa00', bg='#2d2d2d',
+                                      relief='groove', bd=2)
+        portfolio_frame.pack(fill='x', padx=10, pady=5)
+        
+        # Balance disponible
+        balance_frame = tk.Frame(portfolio_frame, bg='#2d2d2d')
+        balance_frame.pack(fill='x', padx=10, pady=5)
+        
+        tk.Label(balance_frame, text="💵 Balance Disponible:", 
+                font=('Arial', 10), fg='#cccccc', bg='#2d2d2d').pack(side='left')
+        
         self.balance_label = tk.Label(
-            right_frame, text="Balance: 0 USDT",
+            balance_frame, text="1000.00 USDT",
             fg='#ffaa00', bg='#2d2d2d',
             font=('Arial', 11, 'bold')
         )
-        self.balance_label.pack(pady=5)
+        self.balance_label.pack(side='right')
+        
+        # Valeur totale portefeuille
+        total_frame = tk.Frame(portfolio_frame, bg='#2d2d2d')
+        total_frame.pack(fill='x', padx=10, pady=(0,5))
+        
+        tk.Label(total_frame, text="📈 Valeur Totale:", 
+                font=('Arial', 10), fg='#cccccc', bg='#2d2d2d').pack(side='left')
+        
+        self.total_value_label = tk.Label(
+            total_frame, text="1000.00 USDT",
+            fg='#00aaff', bg='#2d2d2d',
+            font=('Arial', 11, 'bold')
+        )
+        self.total_value_label.pack(side='right')
+        
+        # P&L Global
+        pnl_frame = tk.Frame(portfolio_frame, bg='#2d2d2d')
+        pnl_frame.pack(fill='x', padx=10, pady=(0,10))
+        
+        tk.Label(pnl_frame, text="💹 P&L Total:", 
+                font=('Arial', 10), fg='#cccccc', bg='#2d2d2d').pack(side='left')
         
         self.pnl_label = tk.Label(
-            right_frame, text="P&L: +0.00 USDT (+0.0%)",
+            pnl_frame, text="+0.00 USDT (0.0%)",
+            fg='#00ff88', bg='#2d2d2d',
+            font=('Arial', 11, 'bold')
+        )
+        self.pnl_label.pack(side='right')
+        
+        # === SECTION STATISTIQUES ===
+        stats_frame = tk.LabelFrame(right_frame, text="📊 STATISTIQUES", 
+                                  font=('Arial', 10, 'bold'), fg='#00aaff', bg='#2d2d2d',
+                                  relief='groove', bd=2)
+        stats_frame.pack(fill='x', padx=10, pady=5)
+        
+        # Grid pour les stats (2 colonnes)
+        stats_grid = tk.Frame(stats_frame, bg='#2d2d2d')
+        stats_grid.pack(fill='x', padx=10, pady=10)
+        
+        # Colonne gauche stats
+        left_stats = tk.Frame(stats_grid, bg='#2d2d2d')
+        left_stats.pack(side='left', fill='both', expand=True)
+        
+        # Positions ouvertes
+        positions_frame = tk.Frame(left_stats, bg='#2d2d2d')
+        positions_frame.pack(fill='x', pady=2)
+        
+        tk.Label(positions_frame, text="🔓 Positions Ouvertes:", 
+                font=('Arial', 9), fg='#cccccc', bg='#2d2d2d').pack(side='left')
+        
+        self.positions_count_label = tk.Label(
+            positions_frame, text="0",
+            fg='#ff8800', bg='#2d2d2d',
+            font=('Arial', 10, 'bold')
+        )
+        self.positions_count_label.pack(side='right')
+        
+        # Total trades
+        trades_frame = tk.Frame(left_stats, bg='#2d2d2d')
+        trades_frame.pack(fill='x', pady=2)
+        
+        tk.Label(trades_frame, text="🔢 Total Trades:", 
+                font=('Arial', 9), fg='#cccccc', bg='#2d2d2d').pack(side='left')
+        
+        self.trades_count_label = tk.Label(
+            trades_frame, text="0",
+            fg='#cccccc', bg='#2d2d2d',
+            font=('Arial', 10, 'bold')
+        )
+        self.trades_count_label.pack(side='right')
+        
+        # Colonne droite stats
+        right_stats = tk.Frame(stats_grid, bg='#2d2d2d')
+        right_stats.pack(side='right', fill='both', expand=True)
+        
+        # Taux de succès
+        winrate_frame = tk.Frame(right_stats, bg='#2d2d2d')
+        winrate_frame.pack(fill='x', pady=2)
+        
+        tk.Label(winrate_frame, text="🎯 Taux Succès:", 
+                font=('Arial', 9), fg='#cccccc', bg='#2d2d2d').pack(side='left')
+        
+        self.winrate_label = tk.Label(
+            winrate_frame, text="0.0%",
             fg='#00ff88', bg='#2d2d2d',
             font=('Arial', 10, 'bold')
         )
-        self.pnl_label.pack(pady=2)
+        self.winrate_label.pack(side='right')
         
-        # Statistiques trading
-        self.trades_label = tk.Label(
-            right_frame, text="Trades: 0 (Win: 0.0%)",
-            fg='white', bg='#2d2d2d',
-            font=('Arial', 10)
+        # Mode trading
+        mode_frame = tk.Frame(right_stats, bg='#2d2d2d')
+        mode_frame.pack(fill='x', pady=2)
+        
+        tk.Label(mode_frame, text="🎮 Mode:", 
+                font=('Arial', 9), fg='#cccccc', bg='#2d2d2d').pack(side='left')
+        
+        self.mode_label = tk.Label(
+            mode_frame, text="SIMULATION",
+            fg='#88aaff', bg='#2d2d2d',
+            font=('Arial', 10, 'bold')
         )
-        self.trades_label.pack(pady=2)
+        self.mode_label.pack(side='right')
         
         self.positions_count_label = tk.Label(
             right_frame, text="Positions: 0 ouvertes",
