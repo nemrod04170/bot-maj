@@ -803,6 +803,7 @@ class ScalpingBotGUI:
                 self.bot.total_trades = 0
                 self.bot.winning_trades = 0
                 self.bot.total_pnl = 0.0
+                self.bot.total_fees = 0.0  # NOUVEAU: Remettre les frais à zéro
                 
                 # Nettoyer l'historique des trades fermés
                 self.bot.closed_trades = []
