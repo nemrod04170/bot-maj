@@ -1149,19 +1149,15 @@ class ScalpingBotGUI:
                         else:
                             tp_str = f"${take_profit:.10f}"
                     
-                    # Couleur selon le signal
-                    if signal == 'BUY':
-                        color = '#00aa44'
-                        arrow = '📈'
-                    else:
-                        color = '#aa4400'
-                        arrow = '📉'
+                    # Affichage simplifié : Toujours BUY maintenant
+                    color = '#00aa44'  # Vert pour BUY
+                    arrow = '📈'       # Flèche montante
                     
                     # Affichage selon le système
                     if system_type == 'SIMPLE_STOP_TAKE_PROFIT' and tp_str:
-                        # NOUVEAU système : Afficher Stop Loss + Take Profit
-                        trade_text = f"""[{timestamp}] 🎮 TRADE OUVERT: {symbol}
-   {arrow} {signal} {operation} | Momentum: {change_24h:+.2f}%
+                        # NOUVEAU système : Afficher Stop Loss + Take Profit (BUY uniquement)
+                        trade_text = f"""[{timestamp}] 🎮 POSITION OUVERTE: {symbol}
+   {arrow} BUY {operation} | Momentum: {change_24h:+.2f}%
    💰 Prix: {price_str} | Quantité: {quantity:.8f}
    🛑 Stop Loss: {sl_str} | 🎯 Take Profit: {tp_str}
    💸 Valeur: {value_usdt:.2f}€ | ID: {order_id}
