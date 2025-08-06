@@ -1395,6 +1395,104 @@ class CryptoTradingBot:
             print(f"❌ Erreur traitement {symbol}: {e}")
             return
     
+    def _calculate_dynamic_take_profit(self, symbol: str, signal_data: Dict) -> float:
+        """Calcule le Take Profit dynamique selon le potentiel de hausse"""
+        try:
+            # Vérifier si le mode dynamique est activé
+            if not self.config_manager.get('DYNAMIC_TAKE_PROFIT', True):
+                return self.config_manager.get('take_profit_percent', 1.5)
+            
+            current_price = signal_data.get('current_price', 0)
+            change_24h = signal_data.get('change_24h', 0)
+            volume_24h = signal_data.get('volume_24h', 0)
+            
+            # === 1. ANALYSE RSI (estimation basée sur change_24h) ===
+            # Estimation RSI : Plus le change est négatif, plus le RSI est bas
+            estimated_rsi = 50 + (change_24h * 2)
+            if estimated_rsi < 0: estimated_rsi = 0
+            if estimated_rsi > 100: estimated_rsi = 100
+            
+            rsi_very_low_threshold = self.config_manager.get('RSI_VERY_LOW_THRESHOLD', 25)
+            rsi_medium_threshold = self.config_manager.get('RSI_MEDIUM_THRESHOLD', 40)
+            
+            if estimated_rsi < rsi_very_low_threshold:
+                rsi_tp = self.config_manager.get('TP_RSI_VERY_LOW', 2.5)
+                rsi_strength = "TRÈS BAS"
+            elif estimated_rsi < rsi_medium_threshold:
+                rsi_tp = self.config_manager.get('TP_RSI_MEDIUM', 1.5)
+                rsi_strength = "MOYEN"
+            else:
+                rsi_tp = self.config_manager.get('TP_RSI_LIMIT', 1.0)
+                rsi_strength = "LIMITE"
+            
+            # === 2. ANALYSE VOLUME SPIKE ===
+            # Estimation volume ratio basée sur les données
+            volume_ratio = min(150 + (abs(change_24h) * 20), 400)  # Estimation
+            
+            volume_high_threshold = self.config_manager.get('VOLUME_SPIKE_HIGH_THRESHOLD', 200)
+            volume_medium_threshold = self.config_manager.get('VOLUME_SPIKE_MEDIUM_THRESHOLD', 130)
+            
+            if volume_ratio > volume_high_threshold:
+                volume_tp = self.config_manager.get('TP_VOLUME_SPIKE_HIGH', 3.0)
+                volume_strength = "ÉNORME"
+            elif volume_ratio > volume_medium_threshold:
+                volume_tp = self.config_manager.get('TP_VOLUME_SPIKE_MEDIUM', 2.0)
+                volume_strength = "FORT"
+            else:
+                volume_tp = self.config_manager.get('TP_VOLUME_SPIKE_LOW', 1.5)
+                volume_strength = "NORMAL"
+            
+            # === 3. ANALYSE PUMP 3MIN ===
+            pump_3min = abs(change_24h)  # Utiliser change_24h comme proxy
+            
+            pump_strong_threshold = self.config_manager.get('PUMP_STRONG_THRESHOLD', 2.0)
+            pump_medium_threshold = self.config_manager.get('PUMP_MEDIUM_THRESHOLD', 1.0)
+            
+            if pump_3min > pump_strong_threshold:
+                pump_tp = self.config_manager.get('TP_PUMP_STRONG', 2.5)
+                pump_strength = "TRÈS FORT"
+            elif pump_3min > pump_medium_threshold:
+                pump_tp = self.config_manager.get('TP_PUMP_MEDIUM', 1.8)
+                pump_strength = "FORT"
+            else:
+                pump_tp = self.config_manager.get('TP_PUMP_LOW', 1.2)
+                pump_strength = "MODÉRÉ"
+            
+            # === 4. ANALYSE TYPE DE CRYPTO ===
+            base_currency = symbol.split('/')[0]
+            
+            if base_currency in ['BTC', 'ETH']:
+                crypto_tp = self.config_manager.get('TP_BTC_ETH', 1.5)
+                crypto_type = "STABLE"
+            elif base_currency in ['BNB', 'ADA', 'SOL', 'DOT', 'AVAX', 'LINK', 'UNI', 'MATIC', 'ATOM', 'XRP']:
+                crypto_tp = self.config_manager.get('TP_TOP_ALTCOINS', 2.0)
+                crypto_type = "TOP ALTCOIN"
+            else:
+                crypto_tp = self.config_manager.get('TP_MICROCAPS', 3.5)
+                crypto_type = "MICROCAP"
+            
+            # === 5. CALCUL TAKE PROFIT FINAL (moyenne pondérée) ===
+            # Pondération : RSI 30%, Volume 25%, Pump 25%, Type 20%
+            dynamic_tp = (rsi_tp * 0.30) + (volume_tp * 0.25) + (pump_tp * 0.25) + (crypto_tp * 0.20)
+            
+            # Limiter entre 1% et 5% pour éviter les extrêmes
+            dynamic_tp = max(1.0, min(dynamic_tp, 5.0))
+            
+            # Log détaillé du calcul
+            self.log(f"🎯 TP DYNAMIQUE {symbol}:")
+            self.log(f"   📊 RSI: {estimated_rsi:.0f} ({rsi_strength}) → {rsi_tp:.1f}%")
+            self.log(f"   📈 Volume: {volume_ratio:.0f}% ({volume_strength}) → {volume_tp:.1f}%")
+            self.log(f"   🚀 Pump: {pump_3min:.1f}% ({pump_strength}) → {pump_tp:.1f}%")
+            self.log(f"   💎 Type: {crypto_type} → {crypto_tp:.1f}%")
+            self.log(f"   🎯 TAKE PROFIT FINAL: {dynamic_tp:.1f}%")
+            
+            return dynamic_tp
+            
+        except Exception as e:
+            self.log(f"❌ Erreur calcul TP dynamique {symbol}: {e}")
+            # Fallback sur TP fixe
+            return self.config_manager.get('take_profit_percent', 1.5)
+    
     def _execute_simulated_trade(self, symbol: str, signal_data: Dict):
         """Exécute un trade simulé avec affichage dans le GUI + gestion positions"""
         try:
