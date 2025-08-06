@@ -1,7 +1,7 @@
 order_size = 50
 max_open_positions = 2
 INITIAL_BALANCE = 1000.0
-POSITION_SIZE_USDT = 50
+POSITION_SIZE_USDT = 200
 stop_loss_percent = 0.5
 take_profit_percent = 1.5
 DYNAMIC_TAKE_PROFIT = True
