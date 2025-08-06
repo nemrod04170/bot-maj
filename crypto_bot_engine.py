@@ -1366,8 +1366,9 @@ class CryptoTradingBot:
             elif change_24h > 1.0:  # +1% = signal de vente (vendre haut)
                 signal = 'SELL'
             
-            if signal in ['BUY', 'SELL']:
-                print(f"🎯 {symbol}: Signal {signal} généré (Change: {change_24h:+.2f}%)")
+            # NOUVELLE LOGIQUE : ENTRER UNIQUEMENT SUR SIGNAL BUY
+            if signal == 'BUY':
+                print(f"✅ {symbol}: Signal BUY généré (Change: {change_24h:+.2f}%) - ENTRÉE EN POSITION")
                 
                 # SIMULATION de trading avec vraies données
                 if self.simulation_mode:
@@ -1386,6 +1387,9 @@ class CryptoTradingBot:
                         'volume_24h': volume_24h,
                         'confidence': 0.7
                     })
+            elif signal == 'SELL':
+                print(f"ℹ️ {symbol}: Signal SELL détecté (Change: {change_24h:+.2f}%) - IGNORÉ (on ne trade que les BUY)")
+                return  # Ignorer les signaux SELL
                     
         except Exception as e:
             print(f"❌ Erreur traitement {symbol}: {e}")
