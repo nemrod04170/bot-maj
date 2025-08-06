@@ -1616,17 +1616,18 @@ class CryptoTradingBot:
                 self._close_position_scalping(existing_position, current_price)
                 return
             
-            # Créer l'ordre simulé avec SYSTÈME SIMPLIFIÉ : Stop Loss + Take Profit (TOUJOURS LONG)
+            # Créer l'ordre simulé avec SYSTÈME SIMPLIFIÉ : Stop Loss + Take Profit Dynamique
             trade_data = {
                 'symbol': symbol,
-                'side': signal_display,  # Pour affichage (BUY ou SELL)
+                'side': signal_display,  # Pour affichage (BUY)
                 'operation': operation,  # TOUJOURS 'ACHAT'
                 'direction': direction,  # TOUJOURS 'LONG'
                 'quantity': quantity,
                 'price': entry_price,  # Prix maker, pas prix marché
                 'entry_price': entry_price,
                 'stop_loss': stop_loss,
-                'take_profit': take_profit,  # NOUVEAU: Take Profit fixe
+                'take_profit': take_profit,  # NOUVEAU: Take Profit Dynamique
+                'dynamic_tp_percent': dynamic_tp_percent,  # % TP calculé dynamiquement
                 'timestamp': datetime.now(),
                 'entry_time': datetime.now(),
                 'direction': direction,
@@ -1636,7 +1637,7 @@ class CryptoTradingBot:
                 'order_type': order_type,
                 'status': 'open',
                 'entry_momentum': current_price,  # Pour surveillance intelligente
-                'entry_rsi': 50,  # TODO: Calculer RSI réel à l'entrée
+                'change_24h': change_24h,  # Pour affichage du momentum
                 'last_check': datetime.now(),
                 'system_type': 'SIMPLE_STOP_TAKE_PROFIT',  # Nouveau système
                 'order_id': f"sim_{symbol.replace('/', '')}_{int(time.time())}"
